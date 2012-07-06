@@ -29,6 +29,7 @@ public class JMTC_Thread extends Thread {
     private int packetType = 0;
     private String schema = "";
     private int sequenceId = 0;
+    private String query = "";
     
     // Packet types
     public static final int COM_QUIT                = 0x01;
@@ -116,19 +117,19 @@ public class JMTC_Thread extends Thread {
     }
 
     public void readClient() {
-        int readBytes = 0;
-        byte[] data = new byte[1024];
+        int b = 0;
         
         try {
             // Read from the client
             while (this.clientIn.available() > 0) {
-                readBytes = this.clientIn.read(data, 0, 1024);
-                if (readBytes == -1) {
+
+                b = this.clientIn.read();
+                
+                if (b == -1) {
                     this.running = 0;
                     return;
                 }
-                System.err.print("Reading from Client "+readBytes+" bytes.\n");
-                this.buffer.addAll(Arrays.asList(data));
+                this.buffer.add(b);
             }
         }
         catch (IOException e) {
@@ -138,36 +139,37 @@ public class JMTC_Thread extends Thread {
     }
 
     public void readMysql() {
-        int readBytes = 0;
-        byte[] data = new byte[1024];
+        int b = 0;
         
         try {
             // Read from the client
             while (this.mysqlIn.available() > 0) {
-                readBytes = this.mysqlIn.read(data, 0, 1024);
-                if (readBytes == -1) {
+                
+                b = this.mysqlIn.read();
+                if (b == -1) {
                     this.running = 0;
                     return;
                 }
-                System.err.print("Reading from MySQL "+readBytes+" bytes.\n");
-                this.buffer.addAll(Arrays.asList(data));
+                this.buffer.add(b);
             }
         }
         catch (IOException e) {
             this.running = 0;
         }
-        this.processClientPacket();
+        this.processServerPacket();
     }
     
     public void writeClient() {
         int size = this.buffer.size();
+        int i = 0;
         
         if (size == 0)
             return;
         
         try {
             System.err.print("Writing to client "+size+" bytes.\n");
-            this.clientOut.write(this.buffer.toArray());
+            for (i = 0; i < size; i++)
+                this.clientOut.write(this.buffer.get(i));
             this.clearBuffer();
         }
         catch (IOException e) {
@@ -177,13 +179,15 @@ public class JMTC_Thread extends Thread {
 
     public void writeMysql() {
         int size = this.buffer.size();
+        int i = 0;
         
         if (size == 0)
             return;
         
         try {
             System.err.print("Writing to MySQL "+size+" bytes.\n");
-            this.mysqlOut.write(this.buffer.toArray());
+            for (i = 0; i < size; i++)
+                this.mysqlOut.write(this.buffer.get(i));
             this.clearBuffer();
         }
         catch (IOException e) {
@@ -213,46 +217,64 @@ public class JMTC_Thread extends Thread {
     }
     
     public void processClientPacket() {
-        this.dumpBuffer();
-        int size = this.buffer.size();
-        int packetSize = 0;
-        int packetType = 0;
-        
-        if (size < 4)
+        if (this.buffer.size() < 4)
             return;
         
         this.getPacketSize();
+        this.packetType = this.buffer.get(4);
+        this.sequenceId = this.buffer.get(3);
         
-        packetType = this.buffer.get(3);
-        
-        System.err.print("Packet is "+packetType+" type.\n");
+        switch (this.packetType) {
+            // COM_QUIT
+            case 0x01:
+                System.err.print("-> COM_QUIT\n");
+                this.dumpBuffer();
+                this.running = 0;
+                break;
+            
+            // Extract out the new default schema
+            case 0x02:
+                this.schema = "";
+                for (int i = 5; i < this.buffer.size(); i++)
+                    this.schema += (char)this.buffer.get(i).intValue();
+                System.err.print("-> USE "+this.schema+"\n");
+                break;
+            
+            // Query
+            case 0x03:
+                this.query = "";
+                for (int i = 5; i < this.buffer.size(); i++)
+                    this.query += (char)this.buffer.get(i).intValue();
+                System.err.print("-> "+this.query+"\n");
+                break;
+            
+            default:
+                System.err.print("Packet is "+this.packetType+" type.\n");
+                this.dumpBuffer();
+                break;
+        }
     }
     
     public void processServerPacket() {
-        int type = this.buffer.get(4);
-        
-        // Set to unknown
-        this.packetType = this.COM_UNKNOWN;
-        
-        if (type == this.COM_INIT_DB) {
-            this.packetType = this.COM_INIT_DB
-            
-        }
-        
-        
         this.dumpBuffer();
     }
     
     public int getPacketSize() {
         int size = 0;
+        
+        System.err.print("Buffer is "+this.buffer.size()+" bytes.\n");
+        
         size = size + this.buffer.get(0);
-        System.err.print("Packet is "+packetSize+" bytes.\n");
+        
+        /*
+        System.err.print("Packet is "+size+" bytes.\n");
         
         size = size + this.buffer.get(1);
-        System.err.print("Packet is "+packetSize+" bytes.\n");
+        System.err.print("Packet is "+size+" bytes.\n");
         
         size = size + this.buffer.get(2);
-        System.err.print("Packet is "+packetSize+" bytes.\n");
+        System.err.print("Packet is "+size+" bytes.\n");
+        */
         
         return size;
     }
