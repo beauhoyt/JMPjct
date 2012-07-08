@@ -690,7 +690,7 @@ public class JMTC_Thread extends Thread {
                 this.offset += 1;
                 break;
             }
-            str += (char)b;
+            str += JMTC_Thread.int2char(b);
             this.offset += 1;
         }
         
