@@ -27,14 +27,28 @@ public class JMTC_Thread extends Thread {
     private int running = 1;
 
     // Connection info
-    private int packetType = 0;
+    private Integer packetType = 0;
     private String schema = "";
-    private int sequenceId = 0;
+    private Integer sequenceId = 0;
     private String query = "";
-    private int affectedRows = 0;
-    private int lastInsertId = 0;
-    private int statusFlags = 0;
-    private int warnings = 0;
+    private Integer affectedRows = 0;
+    private Integer lastInsertId = 0;
+    private Integer statusFlags = 0;
+    private Integer warnings = 0;
+    private Integer errorCode = 0;
+    private String sqlState = "";
+    private String errorMessage = "";
+    private Integer protocolVersion = 0;
+    private String serverVersion = "";
+    private Integer connectionId = 0;
+    private Integer capabilityFlags = 0;
+    private Integer characterSet = 0;
+    private Integer serverCapabilityFlags = 0;
+    private Integer serverCharacterSet = 0;
+    private Integer clientCapabilityFlags = 0;
+    private Integer clientCharacterSet = 0;
+    private String user = "";
+    private Integer clientMaxPacketSize = 0;
     
     // Modes
     private int mode = 0;
@@ -85,6 +99,29 @@ public class JMTC_Thread extends Thread {
     public static final int SERVER_QUERY_WAS_SLOW              = 0x0800;
     public static final int SERVER_PS_OUT_PARAMS               = 0x1000;
     
+    public static final int CLIENT_LONG_PASSWORD               = 0x00000001;
+    public static final int CLIENT_FOUND_ROWS                  = 0x00000002;
+    public static final int CLIENT_LONG_FLAG                   = 0x00000004;
+    public static final int CLIENT_CONNECT_WITH_DB             = 0x00000008;
+    public static final int CLIENT_NO_SCHEMA                   = 0x00000010;
+    public static final int CLIENT_COMPRESS                    = 0x00000020;
+    public static final int CLIENT_ODBC                        = 0x00000040;
+    public static final int CLIENT_LOCAL_FILES                 = 0x00000080;
+    public static final int CLIENT_IGNORE_SPACE                = 0x00000100;
+    public static final int CLIENT_PROTOCOL_41                 = 0x00000200;
+    public static final int CLIENT_INTERACTIVE                 = 0x00000400;
+    public static final int CLIENT_SSL                         = 0x00000800;
+    public static final int CLIENT_IGNORE_SIGPIPE              = 0x00001000;
+    public static final int CLIENT_TRANSACTIONS                = 0x00002000;
+    public static final int CLIENT_RESERVED                    = 0x00004000;
+    public static final int CLIENT_SECURE_CONNECTION           = 0x00008000;
+    public static final int CLIENT_MULTI_STATEMENTS            = 0x00010000;
+    public static final int CLIENT_MULTI_RESULTS               = 0x00020000;
+    public static final int CLIENT_PS_MULTI_RESULTS            = 0x00040000;
+    public static final int CLIENT_SSL_VERIFY_SERVER_CERT      = 0x40000000;
+    public static final int CLIENT_REMEMBER_OPTIONS            = 0x80000000;
+    
+    
     public JMTC_Thread(Socket clientSocket, String mysqlHost, int mysqlPort) {
         this.clientSocket = clientSocket;
         this.mysqlHost = mysqlHost;
@@ -106,6 +143,8 @@ public class JMTC_Thread extends Thread {
     }
 
     public void run() {
+        this.mode = JMTC_Thread.MODE_AUTH;
+        
         
         // Connection init
         this.readClient();
@@ -113,20 +152,24 @@ public class JMTC_Thread extends Thread {
         
         // Auth Challenge
         this.readMysql();
+        this.processAuthChallengePacket();
         this.writeClient();
         
         // Auth Response
         this.readClient();
+        this.processAuthResponsePacket();
         this.writeMysql();
-        
-        // Okay!
-        // TODO: Verify this is an OK_PACKET
-        this.readMysql();
-        this.writeClient();
         
         // Command Phase!
         this.mode = JMTC_Thread.MODE_COMMAND;
         
+        // Okay! Verify we logged in correctly...
+        this.readMysql();
+        if (this.packetType != JMTC_Thread.OK)
+            this.running = 0;
+        this.writeClient();
+
+        // In command mode, we go back and forth requesting data...        
         while (this.running == 1) {
             
             this.readClient();
@@ -256,7 +299,148 @@ public class JMTC_Thread extends Thread {
         }
     }
     
+    public void processAuthChallengePacket() {
+        this.offset = 0;
+        this.protocolVersion = this.get_fixed_int(1);
+        this.offset += 4;
+        this.serverVersion   = this.get_nul_string();
+        this.connectionId    = this.get_fixed_int(4);
+        this.offset += 8; // challenge-part-1
+        this.offset += 1; //filler
+        this.serverCapabilityFlags = this.get_fixed_int(2);
+        this.serverCharacterSet = this.get_fixed_int(1);
+
+        System.err.print("<- AuthChallengePacket\n");
+        System.err.print("   Protocol Version: "+this.protocolVersion+"\n");
+        System.err.print("   Server Version: "+this.serverVersion+"\n");
+        System.err.print("   Connection Id: "+this.connectionId+"\n");
+        System.err.print("   Server Character Set: "+this.serverCharacterSet+"\n");
+        
+        System.err.print("   Server Capability Flags: ");
+        this.dumpCapabilityFlags(1);
+        System.err.print("\n");
+        
+        System.err.print("   Status Flags: ");
+        this.dumpStatusFlags();
+        System.err.print("\n");
+    }
+    
+    public void processAuthResponsePacket() {
+        this.offset = 5;
+        this.clientCapabilityFlags = this.get_fixed_int(2);
+        
+        if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_PROTOCOL_41) != 0) {
+            this.offset = 5;
+            this.clientCapabilityFlags = this.get_fixed_int(4);
+            this.clientMaxPacketSize = this.get_fixed_int(4);
+            this.clientCharacterSet = this.get_fixed_int(1);
+            this.offset += 22;
+            this.user = this.get_nul_string();
+            
+            // auth-response
+            if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_SECURE_CONNECTION) != 0)
+                this.get_lenenc_string();
+            else
+                this.get_nul_string();
+            
+            this.schema = this.get_eop_string();
+        }
+        else {
+            this.offset = 5;
+            this.clientCapabilityFlags = this.get_fixed_int(2);
+            this.clientMaxPacketSize = this.get_fixed_int(3);
+            this.user = this.get_nul_string();
+        }
+        
+        System.err.print("-> AuthResponsePacket\n");
+        System.err.print("   Max Packet Size: "+this.clientMaxPacketSize+"\n");
+        System.err.print("   Client Character Set: "+this.clientCharacterSet+"\n");
+        System.err.print("   User: "+this.user+"\n");
+        System.err.print("   Schema: "+this.schema+"\n");
+        
+        System.err.print("   Client Capability Flags: ");
+        this.dumpCapabilityFlags(0);
+        System.err.print("\n");
+        
+    }
+    
+    public void dumpCapabilityFlags(Integer server) {
+        Integer capabilityFlags = 0;
+        if (server == 0)
+            capabilityFlags = this.clientCapabilityFlags;
+        else
+            capabilityFlags = this.serverCapabilityFlags;
+            
+        if (capabilityFlags > 0) {
+            if ((capabilityFlags & JMTC_Thread.CLIENT_LONG_PASSWORD) != 0)
+                System.err.print(" CLIENT_LONG_PASSWORD");
+            if ((capabilityFlags & JMTC_Thread.CLIENT_FOUND_ROWS) != 0)
+                System.err.print(" CLIENT_FOUND_ROWS");
+            if ((capabilityFlags & JMTC_Thread.CLIENT_LONG_FLAG) != 0)
+                System.err.print(" CLIENT_LONG_FLAG");
+            if ((capabilityFlags & JMTC_Thread.CLIENT_CONNECT_WITH_DB) != 0)
+                System.err.print(" CLIENT_CONNECT_WITH_DB");
+            if ((capabilityFlags & JMTC_Thread.CLIENT_NO_SCHEMA) != 0)
+                System.err.print(" CLIENT_NO_SCHEMA");
+            if ((capabilityFlags & JMTC_Thread.CLIENT_COMPRESS) != 0)
+                System.err.print(" CLIENT_COMPRESS");
+            if ((capabilityFlags & JMTC_Thread.CLIENT_ODBC) != 0)
+                System.err.print(" CLIENT_ODBC");
+            if ((capabilityFlags & JMTC_Thread.CLIENT_LOCAL_FILES) != 0)
+                System.err.print(" CLIENT_LOCAL_FILES");
+            if ((capabilityFlags & JMTC_Thread.CLIENT_IGNORE_SPACE) != 0)
+                System.err.print(" CLIENT_IGNORE_SPACE");
+            if ((capabilityFlags & JMTC_Thread.CLIENT_PROTOCOL_41) != 0)
+                System.err.print(" CLIENT_PROTOCOL_41");
+            if ((capabilityFlags & JMTC_Thread.CLIENT_INTERACTIVE) != 0)
+                System.err.print(" CLIENT_INTERACTIVE");
+            if ((capabilityFlags & JMTC_Thread.CLIENT_SSL) != 0)
+                System.err.print(" CLIENT_SSL");
+            if ((capabilityFlags & JMTC_Thread.CLIENT_IGNORE_SIGPIPE) != 0)
+                System.err.print(" CLIENT_IGNORE_SIGPIPE");
+            if ((capabilityFlags & JMTC_Thread.CLIENT_TRANSACTIONS) != 0)
+                System.err.print(" CLIENT_TRANSACTIONS");
+            if ((capabilityFlags & JMTC_Thread.CLIENT_RESERVED) != 0)
+                System.err.print(" CLIENT_RESERVED");
+            if ((capabilityFlags & JMTC_Thread.CLIENT_SECURE_CONNECTION) != 0)
+                System.err.print(" CLIENT_SECURE_CONNECTION");
+        }
+    }
+    
+    public void dumpStatusFlags() {
+        if (this.statusFlags > 0) {
+            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_IN_TRANS) != 0)
+                System.err.print(" SERVER_STATUS_IN_TRANS");
+            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_AUTOCOMMIT) != 0)
+                System.err.print(" SERVER_STATUS_AUTOCOMMIT");
+            if ((this.statusFlags & JMTC_Thread.SERVER_MORE_RESULTS_EXISTS) != 0)
+                System.err.print(" SERVER_MORE_RESULTS_EXISTS");
+            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_NO_GOOD_INDEX_USED) != 0)
+                System.err.print(" SERVER_STATUS_NO_GOOD_INDEX_USED");
+            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_NO_INDEX_USED) != 0)
+                System.err.print(" SERVER_STATUS_NO_INDEX_USED");
+            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_CURSOR_EXISTS) != 0)
+                System.err.print(" SERVER_STATUS_CURSOR_EXISTS");
+            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_LAST_ROW_SENT) != 0)
+                System.err.print(" SERVER_STATUS_LAST_ROW_SENT");
+            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_LAST_ROW_SENT) != 0)
+                System.err.print(" SERVER_STATUS_LAST_ROW_SENT");
+            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_DB_DROPPED) != 0)
+                System.err.print(" SERVER_STATUS_DB_DROPPED");
+            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_NO_BACKSLASH_ESCAPES) != 0)
+                System.err.print(" SERVER_STATUS_NO_BACKSLASH_ESCAPES");
+            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_METADATA_CHANGED) != 0)
+                System.err.print(" SERVER_STATUS_METADATA_CHANGED");
+            if ((this.statusFlags & JMTC_Thread.SERVER_QUERY_WAS_SLOW) != 0)
+                System.err.print(" SERVER_QUERY_WAS_SLOW");
+            if ((this.statusFlags & JMTC_Thread.SERVER_PS_OUT_PARAMS) != 0)
+                System.err.print(" SERVER_PS_OUT_PARAMS");
+        }
+    }
+    
     public void processClientPacket() {
+        if (this.mode != JMTC_Thread.MODE_COMMAND)
+            return;
         if (this.buffer.size() < 4)
             return;
         
@@ -295,6 +479,8 @@ public class JMTC_Thread extends Thread {
     }
     
     public void processServerPacket() {
+        if (this.mode != JMTC_Thread.MODE_COMMAND)
+            return;
         if (this.buffer.size() < 4)
             return;
         
@@ -313,48 +499,31 @@ public class JMTC_Thread extends Thread {
                     this.warnings     = this.get_fixed_int(2);
                 }
                 
-                System.err.print("<- OK");
+                System.err.print("<- OK\n");
                 if (this.affectedRows > 0)
-                    System.err.print(" Affected rows: "+this.affectedRows);
+                    System.err.print("   Affected rows: "+this.affectedRows+"\n");
                 if (this.lastInsertId > 0)
-                    System.err.print(" Inserted id: "+this.lastInsertId);
+                    System.err.print("   Inserted id: "+this.lastInsertId+"\n");
                 if (this.warnings > 0)
-                    System.err.print(" Warnings: "+this.warnings);
-                if (this.statusFlags > 0) {
-                    if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_IN_TRANS) != 0)
-                        System.err.print(" SERVER_STATUS_IN_TRANS");
-                    if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_AUTOCOMMIT) != 0)
-                        System.err.print(" SERVER_STATUS_AUTOCOMMIT");
-                    if ((this.statusFlags & JMTC_Thread.SERVER_MORE_RESULTS_EXISTS) != 0)
-                        System.err.print(" SERVER_MORE_RESULTS_EXISTS");
-                    if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_NO_GOOD_INDEX_USED) != 0)
-                        System.err.print(" SERVER_STATUS_NO_GOOD_INDEX_USED");
-                    if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_NO_INDEX_USED) != 0)
-                        System.err.print(" SERVER_STATUS_NO_INDEX_USED");
-                    if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_CURSOR_EXISTS) != 0)
-                        System.err.print(" SERVER_STATUS_CURSOR_EXISTS");
-                    if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_LAST_ROW_SENT) != 0)
-                        System.err.print(" SERVER_STATUS_LAST_ROW_SENT");
-                    if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_LAST_ROW_SENT) != 0)
-                        System.err.print(" SERVER_STATUS_LAST_ROW_SENT");
-                    if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_DB_DROPPED) != 0)
-                        System.err.print(" SERVER_STATUS_DB_DROPPED");
-                    if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_NO_BACKSLASH_ESCAPES) != 0)
-                        System.err.print(" SERVER_STATUS_NO_BACKSLASH_ESCAPES");
-                    if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_METADATA_CHANGED) != 0)
-                        System.err.print(" SERVER_STATUS_METADATA_CHANGED");
-                    if ((this.statusFlags & JMTC_Thread.SERVER_QUERY_WAS_SLOW) != 0)
-                        System.err.print(" SERVER_QUERY_WAS_SLOW");
-                    if ((this.statusFlags & JMTC_Thread.SERVER_PS_OUT_PARAMS) != 0)
-                        System.err.print(" SERVER_PS_OUT_PARAMS");
-                }
-                
+                    System.err.print("   Warnings: "+this.warnings+"\n");
+
+                System.err.print("   Status Flags: ");
+                this.dumpStatusFlags();
                 System.err.print("\n");
+                
                 break;
             
             // Extract out the new default schema
             case JMTC_Thread.ERR:
+                if (this.mode == JMTC_Thread.MODE_COMMAND) {
+                    this.offset = 5;
+                    this.errorCode    = this.get_fixed_int(2);
+                    this.offset++;
+                    
+                }
+                
                 System.err.print("<- ERR\n");
+                
                 break;
             
             default:
@@ -426,13 +595,13 @@ public class JMTC_Thread extends Thread {
         return -1;
     }
     
-    public int get_fixed_int(int size) {
-        int value = -1;
+    public Integer get_fixed_int(int size) {
+        Integer value = -1;
         
         // 1 byte int
         if (size == 1 && this.buffer.size() >= (size + this.offset) ) {
             value = this.buffer.get(this.offset);
-            this.offset += 1;
+            this.offset += size;
             return value;
         }
             
@@ -440,7 +609,7 @@ public class JMTC_Thread extends Thread {
         if (size == 2 && this.buffer.size() >= (size + this.offset) ) {
             value = (this.buffer.get(this.offset+0) << 0)
                   | (this.buffer.get(this.offset+1) << 8);
-            this.offset += 2;
+            this.offset += size;
             return value;
         }
         
@@ -449,7 +618,17 @@ public class JMTC_Thread extends Thread {
             value = (this.buffer.get(this.offset+0) << 0)
                   | (this.buffer.get(this.offset+1) << 8)
                   | (this.buffer.get(this.offset+2) << 16);
-            this.offset += 3;
+            this.offset += size;
+            return value;
+        }
+        
+        // 4 byte int
+        if (size == 4 && this.buffer.size() >= (size + this.offset) ) {
+            value = (this.buffer.get(this.offset+0) << 0)
+                  | (this.buffer.get(this.offset+1) << 8)
+                  | (this.buffer.get(this.offset+2) << 16)
+                  | (this.buffer.get(this.offset+3) << 24);
+            this.offset += size;
             return value;
         }
         
@@ -467,14 +646,79 @@ public class JMTC_Thread extends Thread {
                   |  (this.buffer.get(this.offset+2) << 16)
                   |  (this.buffer.get(this.offset+3) << 24);
                   
-            this.offset += 8;
+            this.offset += size;
             return value;
         }
         
-        System.err.print("Decoding int at offset "+this.offset+" failed!\n");
+        System.err.print("Decoding int "+size+" at offset "+this.offset+" failed!\n");
         this.dumpBuffer();
         
         return -1;
+    }
+    
+    public String get_fixed_string(int len) {
+        String str = "";
+        int i = 0;
+        
+        for (i = this.offset; i < this.offset+len; i++)
+            str += (char)this.buffer.get(i).intValue();
+            
+        this.offset += i;
+        
+        return str;
+    }
+    
+    public String get_eop_string() {
+        String str = "";
+        int i = 0;
+        
+        for (i = this.offset; i < this.buffer.size(); i++)
+            str += (char)this.buffer.get(i).intValue();
+        this.offset += i;
+        
+        return str;
+    }
+    
+    public String get_nul_string() {
+        String str = "";
+        int i = 0;
+        int b = 0;
+        
+        for (i = this.offset; i < this.buffer.size(); i++) {
+            b = this.buffer.get(i).intValue();
+            if (b == 0x00) {
+                this.offset += 1;
+                break;
+            }
+            str += (char)b;
+            this.offset += 1;
+        }
+        
+        return str;
+    }
+
+    public String get_lenenc_string() {
+        String str = "";
+        int b = 0;
+        int i = 0;
+        
+        for (i = this.offset; i < this.buffer.size(); i++) {
+            b = this.buffer.get(i).intValue();
+            if (b == 0x00)
+                break;
+            str += JMTC_Thread.int2char(b);
+        }
+        this.offset += i;
+        
+        return str;
+    }
+    
+    public static char int2char(int i) {
+        return (char)i;
+    }
+    
+    public static char int2char(Integer i) {
+        return (char)i.intValue();
     }
     
 }
