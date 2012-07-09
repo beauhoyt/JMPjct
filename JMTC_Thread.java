@@ -56,6 +56,14 @@ public class JMTC_Thread extends Thread {
     public static final int MODE_AUTH = 0;
     public static final int MODE_COMMAND = 1;
     
+    public static final int MODE_AUTH_CHALLENGE    = 1;
+    public static final int MODE_AUTH_RESPONSE     = 2;
+    public static final int MODE_AUTH_FINISH       = 3;
+    public static final int MODE_CMD_RECEIVE       = 4;
+    public static final int MODE_CMD_SEND          = 5;
+    public static final int MODE_CMD_REPLY_RECEIVE = 6;
+    public static final int MODE_CMD_REPLY_SEND    = 7;
+    
     // Packet types
     public static final int COM_QUIT                = 0x01;
     public static final int COM_INIT_DB             = 0x02;
