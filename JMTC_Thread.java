@@ -145,11 +145,6 @@ public class JMTC_Thread extends Thread {
     public void run() {
         this.mode = JMTC_Thread.MODE_AUTH;
         
-        
-        // Connection init
-        this.readClient();
-        this.writeMysql();
-        
         // Auth Challenge
         this.readMysql();
         this.processAuthChallengePacket();
@@ -157,7 +152,27 @@ public class JMTC_Thread extends Thread {
         
         // Auth Response
         this.readClient();
+        this.dumpBuffer();
         this.processAuthResponsePacket();
+        
+        // Remove Compression and SSL support so we can sniff traffic easily
+        if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_COMPRESS) != 0)
+            this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_COMPRESS;
+        
+        if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_SSL) != 0)
+            this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_SSL;
+            
+        System.err.print("   New Client Capability Flags: ");
+        this.dumpCapabilityFlags(0);
+        System.err.print("\n");
+            
+        this.offset = 0;
+        if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_PROTOCOL_41) != 0)
+            this.set_fixed_int(4, this.clientCapabilityFlags);
+        else
+            this.set_fixed_int(2, this.clientCapabilityFlags);
+            
+        this.dumpBuffer();
         this.writeMysql();
         
         // Command Phase!
@@ -191,7 +206,7 @@ public class JMTC_Thread extends Thread {
         int b = 0;
         
         try {
-            if (this.clientIn.available() == 0)
+            while (this.clientIn.available() == 0)
                 Thread.sleep(10);
             
             // Read from the client
@@ -219,7 +234,7 @@ public class JMTC_Thread extends Thread {
         int b = 0;
         
         try {
-            if (this.mysqlIn.available() == 0)
+            while (this.mysqlIn.available() == 0)
                 Thread.sleep(10);
             
             // Read from the client
@@ -457,17 +472,13 @@ public class JMTC_Thread extends Thread {
             
             // Extract out the new default schema
             case JMTC_Thread.COM_INIT_DB:
-                this.schema = "";
-                for (int i = 5; i < this.buffer.size(); i++)
-                    this.schema += (char)this.buffer.get(i).intValue();
+                this.schema = this.get_eop_string();
                 System.err.print("-> USE "+this.schema+"\n");
                 break;
             
             // Query
             case JMTC_Thread.COM_QUERY:
-                this.query = "";
-                for (int i = 5; i < this.buffer.size(); i++)
-                    this.query += (char)this.buffer.get(i).intValue();
+                this.query = this.get_eop_string();
                 System.err.print("-> "+this.query+"\n");
                 break;
             
@@ -595,6 +606,54 @@ public class JMTC_Thread extends Thread {
         return -1;
     }
     
+    public void set_fixed_int(Integer size, Integer value) {
+        if (size == 8 && this.buffer.size() >= (this.offset + size)) {
+            this.buffer.set(this.offset+0, value <<  0);
+            this.buffer.set(this.offset+1, value <<  8);
+            this.buffer.set(this.offset+2, value << 16);
+            this.buffer.set(this.offset+3, value << 24);
+            this.buffer.set(this.offset+4, value << 32);
+            this.buffer.set(this.offset+5, value << 40);
+            this.buffer.set(this.offset+6, value << 48);
+            this.buffer.set(this.offset+7, value << 56);
+            this.offset += 8;
+            return;
+        }
+        
+        if (size == 4 && this.buffer.size() >= (this.offset + size)) {
+            this.buffer.set(this.offset+0, value <<  0);
+            this.buffer.set(this.offset+1, value <<  8);
+            this.buffer.set(this.offset+2, value << 16);
+            this.buffer.set(this.offset+3, value << 24);
+            this.offset += 4;
+            return;
+        }
+        
+        if (size == 3 && this.buffer.size() >= (this.offset + size)) {
+            this.buffer.set(this.offset+0, value <<  0);
+            this.buffer.set(this.offset+1, value <<  8);
+            this.buffer.set(this.offset+2, value << 16);
+            this.offset += 3;
+            return;
+        }
+        
+        if (size == 2 && this.buffer.size() >= (this.offset + size)) {
+            this.buffer.set(this.offset+0, value <<  0);
+            this.buffer.set(this.offset+1, value <<  8);
+            this.offset += 2;
+            return;
+        }
+        
+        if (size == 1 && this.buffer.size() >= (this.offset + size)) {
+            this.buffer.set(this.offset+0, value <<  0);
+            this.offset += 1;
+            return;
+        }
+        
+        System.err.print("Setting int "+size+": "+value+" at offset "+this.offset+" failed!\n");
+        return;
+    }
+    
     public Integer get_fixed_int(int size) {
         Integer value = -1;
         
@@ -661,7 +720,7 @@ public class JMTC_Thread extends Thread {
         int i = 0;
         
         for (i = this.offset; i < this.offset+len; i++)
-            str += (char)this.buffer.get(i).intValue();
+            str += JMTC_Thread.int2char(this.buffer.get(i));
             
         this.offset += i;
         
@@ -673,7 +732,7 @@ public class JMTC_Thread extends Thread {
         int i = 0;
         
         for (i = this.offset; i < this.buffer.size(); i++)
-            str += (char)this.buffer.get(i).intValue();
+            str += JMTC_Thread.int2char(this.buffer.get(i));
         this.offset += i;
         
         return str;
