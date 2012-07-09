@@ -53,16 +53,11 @@ public class JMTC_Thread extends Thread {
     
     // Modes
     private int mode = 0;
-    public static final int MODE_AUTH = 0;
-    public static final int MODE_COMMAND = 1;
-    
     public static final int MODE_AUTH_CHALLENGE    = 1;
     public static final int MODE_AUTH_RESPONSE     = 2;
     public static final int MODE_AUTH_FINISH       = 3;
-    public static final int MODE_CMD_RECEIVE       = 4;
-    public static final int MODE_CMD_SEND          = 5;
-    public static final int MODE_CMD_REPLY_RECEIVE = 6;
-    public static final int MODE_CMD_REPLY_SEND    = 7;
+    public static final int MODE_CMD_CLIENT        = 4;
+    public static final int MODE_CMD_SERVER        = 5;
     
     // Packet types
     public static final int COM_QUIT                = 0x01;
@@ -144,7 +139,7 @@ public class JMTC_Thread extends Thread {
             this.mysqlSocket = new Socket(this.mysqlHost, this.mysqlPort);
             this.mysqlIn = this.mysqlSocket.getInputStream();
             this.mysqlOut = this.mysqlSocket.getOutputStream();
-            System.err.print("Connected to mysql host.\n");
+            System.err.print("Connected to mysql host.\n\n");
         }
         catch (IOException e) {
             return;
@@ -152,79 +147,51 @@ public class JMTC_Thread extends Thread {
     }
 
     public void run() {
-        this.mode = JMTC_Thread.MODE_AUTH;
-        
-        // Auth Challenge
-        this.readMysql();
-        this.processAuthChallengePacket();
-        
-        // Remove Compression and SSL support so we can sniff traffic easily
-        if ((this.serverCapabilityFlags & JMTC_Thread.CLIENT_COMPRESS) != 0) {
-            System.err.print("   Unsetting CLIENT_COMPRESS\n");
-            this.serverCapabilityFlags ^= JMTC_Thread.CLIENT_COMPRESS;
-        }
-        
-        if ((this.serverCapabilityFlags & JMTC_Thread.CLIENT_SSL) != 0) {
-            System.err.print("   Unsetting CLIENT_SSL\n");
-            this.serverCapabilityFlags ^= JMTC_Thread.CLIENT_SSL;
-        }
-        
-        this.offset = this.serverCapabilityFlagsOffset;
-        this.set_fixed_int(2, this.serverCapabilityFlags);
-        
-        this.writeClient();
-        
-        // Auth Response
-        this.readClient();
-        this.processAuthResponsePacket();
-        
-        // Remove Compression and SSL support so we can sniff traffic easily
-        if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_COMPRESS) != 0) {
-            System.err.print("   Unsetting CLIENT_COMPRESS\n");
-            this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_COMPRESS;
-        }
-        
-        if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_SSL) != 0) {
-            System.err.print("   Unsetting CLIENT_SSL\n");
-            this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_SSL;
-        }
-        
-        this.offset = 5;
-        if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_PROTOCOL_41) != 0)
-            this.set_fixed_int(4, this.clientCapabilityFlags);
-        else
-            this.set_fixed_int(2, this.clientCapabilityFlags);
-            
-        this.writeMysql();
-        
-        // Command Phase!
-        this.mode = JMTC_Thread.MODE_COMMAND;
-        
-        // Okay! Verify we logged in correctly...
-        this.readMysql();
-        if (this.packetType != JMTC_Thread.OK)
-            this.running = 0;
-        this.writeClient();
+        this.mode = JMTC_Thread.MODE_AUTH_CHALLENGE;
 
-        // In command mode, we go back and forth requesting data...        
         while (this.running == 1) {
             
-            this.readClient();
-            this.writeMysql();
+            switch (this.mode) {
+                case JMTC_Thread.MODE_AUTH_CHALLENGE:
+                    System.err.print("MODE_AUTH_CHALLENGE\n");
+                    this.process_auth_challenge_packet();
+                    break;
                 
-            this.readMysql();
-            this.writeClient();
+                case JMTC_Thread.MODE_AUTH_RESPONSE:
+                    System.err.print("MODE_AUTH_RESPONSE\n");
+                    this.process_auth_response_packet();
+                    break;
+                
+                case JMTC_Thread.MODE_AUTH_FINISH:
+                    System.err.print("MODE_AUTH_FINISH\n");
+                    this.process_auth_finish();
+                    break;
+                
+                case JMTC_Thread.MODE_CMD_CLIENT:
+                    System.err.print("MODE_CMD_CLIENT\n");
+                    this.process_client_packet();
+                    break;
+                
+                case JMTC_Thread.MODE_CMD_SERVER:
+                    System.err.print("MODE_CMD_SERVER\n");
+                    this.process_server_packet();
+                    break;
+                
+                default:
+                    this.running = 0;
+                    break;
+            }
             
         }
         System.err.print("Exiting thread.\n");
     }
     
-    public void clearBuffer() {
+    public void clear_buffer() {
         this.offset = 0;
         this.buffer.clear();
     }
 
-    public void readClient() {
+    public void read_client() {
         int b = 0;
         
         try {
@@ -249,10 +216,9 @@ public class JMTC_Thread extends Thread {
         catch (InterruptedException e) {
             this.running = 0;
         }
-        this.processClientPacket();
     }
 
-    public void readMysql() {
+    public void read_mysql() {
         int b = 0;
         
         try {
@@ -276,10 +242,9 @@ public class JMTC_Thread extends Thread {
         catch (InterruptedException e) {
             this.running = 0;
         }
-        this.processServerPacket();
     }
     
-    public void writeClient() {
+    public void write_client() {
         int size = this.buffer.size();
         int i = 0;
         
@@ -287,17 +252,16 @@ public class JMTC_Thread extends Thread {
             return;
         
         try {
-            System.err.print("Writing to client "+size+" bytes.\n");
             for (i = 0; i < size; i++)
                 this.clientOut.write(this.buffer.get(i));
-            this.clearBuffer();
+            this.clear_buffer();
         }
         catch (IOException e) {
             this.running = 0;
         }
     }
 
-    public void writeMysql() {
+    public void write_mysql() {
         int size = this.buffer.size();
         int i = 0;
         
@@ -305,17 +269,16 @@ public class JMTC_Thread extends Thread {
             return;
         
         try {
-            System.err.print("Writing to MySQL "+size+" bytes.\n");
             for (i = 0; i < size; i++)
                 this.mysqlOut.write(this.buffer.get(i));
-            this.clearBuffer();
+            this.clear_buffer();
         }
         catch (IOException e) {
             this.running = 0;
         }
     }
     
-    public void dumpBuffer() {
+    public void dump_buffer() {
         int size = this.buffer.size();
         Integer b = 0;
         int i = 0;
@@ -336,7 +299,9 @@ public class JMTC_Thread extends Thread {
         }
     }
     
-    public void processAuthChallengePacket() {
+    public void process_auth_challenge_packet() {
+        this.read_mysql();
+        
         this.offset = 0;
         this.protocolVersion = this.get_fixed_int(1);
         this.offset += 4;
@@ -344,32 +309,62 @@ public class JMTC_Thread extends Thread {
         this.connectionId    = this.get_fixed_int(4);
         this.offset += 8; // challenge-part-1
         this.offset += 1; //filler
-        this.serverCapabilityFlagsOffset = this.offset;
         this.serverCapabilityFlags = this.get_fixed_int(2);
+        
+        // Remove Compression and SSL support so we can sniff traffic easily
+        this.offset -= 2;
+        if ((this.serverCapabilityFlags & JMTC_Thread.CLIENT_COMPRESS) != 0)
+            this.serverCapabilityFlags ^= JMTC_Thread.CLIENT_COMPRESS;
+        
+        if ((this.serverCapabilityFlags & JMTC_Thread.CLIENT_SSL) != 0)
+            this.serverCapabilityFlags ^= JMTC_Thread.CLIENT_SSL;
+        
+        this.offset -= 2;
+        this.set_fixed_int(2, this.serverCapabilityFlags);
+        
         this.serverCharacterSet = this.get_fixed_int(1);
 
         System.err.print("<- AuthChallengePacket\n");
-        System.err.print("   Protocol Version: "+this.protocolVersion+"\n");
         System.err.print("   Server Version: "+this.serverVersion+"\n");
         System.err.print("   Connection Id: "+this.connectionId+"\n");
-        System.err.print("   Server Character Set: "+this.serverCharacterSet+"\n");
         
         System.err.print("   Server Capability Flags: ");
-        this.dumpCapabilityFlags(1);
-        System.err.print("\n");
+        this.dump_capability_flags(1);
+        System.err.print("\n\n");
         
-        System.err.print("   Status Flags: ");
-        this.dumpStatusFlags();
-        System.err.print("\n");
+        this.write_client();
+        
+        this.mode = JMTC_Thread.MODE_AUTH_RESPONSE;
     }
     
-    public void processAuthResponsePacket() {
+    public void process_auth_finish() {
+        this.read_mysql();
+        if (this.packetType != JMTC_Thread.OK)
+            this.running = 0;
+        this.write_client();
+        
+        this.mode = JMTC_Thread.MODE_CMD_CLIENT;
+    }
+    
+    public void process_auth_response_packet() {
+        this.read_client();
+        
         this.offset = 5;
         this.clientCapabilityFlags = this.get_fixed_int(2);
         
         if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_PROTOCOL_41) != 0) {
             this.offset = 5;
             this.clientCapabilityFlags = this.get_fixed_int(4);
+            this.offset -= 4;
+            // Remove Compression and SSL support so we can sniff traffic easily
+            if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_COMPRESS) != 0)
+                this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_COMPRESS;
+            
+            if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_SSL) != 0)
+                this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_SSL;
+            
+            this.set_fixed_int(4, this.clientCapabilityFlags);
+        
             this.clientMaxPacketSize = this.get_fixed_int(4);
             this.clientCharacterSet = this.get_fixed_int(1);
             this.offset += 22;
@@ -386,23 +381,36 @@ public class JMTC_Thread extends Thread {
         else {
             this.offset = 5;
             this.clientCapabilityFlags = this.get_fixed_int(2);
+            
+            this.offset -= 2;
+            // Remove Compression and SSL support so we can sniff traffic easily
+            if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_COMPRESS) != 0)
+                this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_COMPRESS;
+            
+            if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_SSL) != 0)
+                this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_SSL;
+            
+            this.set_fixed_int(2, this.clientCapabilityFlags);
+            
             this.clientMaxPacketSize = this.get_fixed_int(3);
             this.user = this.get_nul_string();
         }
         
         System.err.print("-> AuthResponsePacket\n");
         System.err.print("   Max Packet Size: "+this.clientMaxPacketSize+"\n");
-        System.err.print("   Client Character Set: "+this.clientCharacterSet+"\n");
         System.err.print("   User: "+this.user+"\n");
         System.err.print("   Schema: "+this.schema+"\n");
         
         System.err.print("   Client Capability Flags: ");
-        this.dumpCapabilityFlags(0);
-        System.err.print("\n");
+        this.dump_capability_flags(0);
+        System.err.print("\n\n");
+        
+        this.write_mysql();
+        this.mode = JMTC_Thread.MODE_AUTH_FINISH;
         
     }
     
-    public void dumpCapabilityFlags(Integer server) {
+    public void dump_capability_flags(Integer server) {
         Integer capabilityFlags = 0;
         if (server == 0)
             capabilityFlags = this.clientCapabilityFlags;
@@ -445,7 +453,7 @@ public class JMTC_Thread extends Thread {
         }
     }
     
-    public void dumpStatusFlags() {
+    public void dump_status_flags() {
         if (this.statusFlags > 0) {
             if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_IN_TRANS) != 0)
                 System.err.print(" SERVER_STATUS_IN_TRANS");
@@ -476,20 +484,20 @@ public class JMTC_Thread extends Thread {
         }
     }
     
-    public void processClientPacket() {
-        if (this.mode != JMTC_Thread.MODE_COMMAND)
-            return;
-        if (this.buffer.size() < 4)
+    public void process_client_packet() {
+        if (this.mode < JMTC_Thread.MODE_AUTH_FINISH)
             return;
         
-        this.getPacketSize();
+        this.read_client();
+        
+        this.get_packet_size();
         this.packetType = this.buffer.get(4);
         this.sequenceId = this.buffer.get(3);
         
         switch (this.packetType) {
             case JMTC_Thread.COM_QUIT:
                 System.err.print("-> COM_QUIT\n");
-                this.dumpBuffer();
+                this.dump_buffer();
                 this.running = 0;
                 break;
             
@@ -501,31 +509,35 @@ public class JMTC_Thread extends Thread {
             
             // Query
             case JMTC_Thread.COM_QUERY:
+                this.offset ++;
                 this.query = this.get_eop_string();
                 System.err.print("-> "+this.query+"\n");
                 break;
             
             default:
                 System.err.print("Packet is "+this.packetType+" type.\n");
-                this.dumpBuffer();
+                this.dump_buffer();
                 break;
         }
+        
+        this.write_mysql();
+        this.mode = JMTC_Thread.MODE_CMD_SERVER;
     }
     
-    public void processServerPacket() {
-        if (this.mode != JMTC_Thread.MODE_COMMAND)
-            return;
-        if (this.buffer.size() < 4)
+    public void process_server_packet() {
+        if (this.mode < JMTC_Thread.MODE_AUTH_FINISH)
             return;
         
-        this.getPacketSize();
+        this.read_mysql();
+        
+        this.get_packet_size();
         this.packetType = this.buffer.get(4);
         this.sequenceId = this.buffer.get(3);
         
         switch (this.packetType) {
             case JMTC_Thread.OK:
                 
-                if (this.mode == JMTC_Thread.MODE_COMMAND) {
+                if (this.mode >= JMTC_Thread.MODE_AUTH_FINISH) {
                     this.offset = 5;
                     this.affectedRows = this.get_lenenc_int();
                     this.lastInsertId = this.get_lenenc_int();
@@ -542,18 +554,16 @@ public class JMTC_Thread extends Thread {
                     System.err.print("   Warnings: "+this.warnings+"\n");
 
                 System.err.print("   Status Flags: ");
-                this.dumpStatusFlags();
+                this.dump_status_flags();
                 System.err.print("\n");
                 
                 break;
             
-            // Extract out the new default schema
             case JMTC_Thread.ERR:
-                if (this.mode == JMTC_Thread.MODE_COMMAND) {
+                if (this.mode >= JMTC_Thread.MODE_AUTH_FINISH) {
                     this.offset = 5;
                     this.errorCode    = this.get_fixed_int(2);
                     this.offset++;
-                    
                 }
                 
                 System.err.print("<- ERR\n");
@@ -562,18 +572,37 @@ public class JMTC_Thread extends Thread {
             
             default:
                 System.err.print("Packet is "+this.packetType+" type.\n");
-                this.dumpBuffer();
+                this.dump_buffer();
                 break;
         }
+        
+        this.write_client();
+        
+        this.mode = JMTC_Thread.MODE_CMD_CLIENT;
     }
     
-    public int getPacketSize() {
+    public int get_packet_size() {
         int size = 0;
         int offset = this.offset;
         this.offset = 0;
         size = this.get_fixed_int(3);
         this.offset = offset;
         return size;
+    }
+    
+    public void set_packet_size() {
+        int size = this.buffer.size();
+        
+        // Remove packet size size
+        size -= 3;
+        
+        // Remove sequence id
+        size -= 1;
+        
+        int offset = this.offset;
+        this.offset = 0;
+        this.set_fixed_int(3, size);
+        this.offset = offset;
     }
     
     public int get_lenenc_int() {
@@ -624,7 +653,7 @@ public class JMTC_Thread extends Thread {
         }
         
         System.err.print("Decoding int at offset "+this.offset+" failed!");
-        this.dumpBuffer();
+        this.dump_buffer();
         
         return -1;
     }
@@ -735,7 +764,7 @@ public class JMTC_Thread extends Thread {
         }
         
         System.err.print("Decoding int "+size+" at offset "+this.offset+" failed!\n");
-        this.dumpBuffer();
+        this.dump_buffer();
         
         return -1;
     }
