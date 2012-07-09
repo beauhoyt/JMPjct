@@ -43,6 +43,7 @@ public class JMTC_Thread extends Thread {
     private Integer connectionId = 0;
     private Integer capabilityFlags = 0;
     private Integer characterSet = 0;
+    private Integer serverCapabilityFlagsOffset = 0;
     private Integer serverCapabilityFlags = 0;
     private Integer serverCharacterSet = 0;
     private Integer clientCapabilityFlags = 0;
@@ -99,22 +100,22 @@ public class JMTC_Thread extends Thread {
     public static final int SERVER_QUERY_WAS_SLOW              = 0x0800;
     public static final int SERVER_PS_OUT_PARAMS               = 0x1000;
     
-    public static final int CLIENT_LONG_PASSWORD               = 0x00000001;
-    public static final int CLIENT_FOUND_ROWS                  = 0x00000002;
-    public static final int CLIENT_LONG_FLAG                   = 0x00000004;
-    public static final int CLIENT_CONNECT_WITH_DB             = 0x00000008;
-    public static final int CLIENT_NO_SCHEMA                   = 0x00000010;
-    public static final int CLIENT_COMPRESS                    = 0x00000020;
-    public static final int CLIENT_ODBC                        = 0x00000040;
-    public static final int CLIENT_LOCAL_FILES                 = 0x00000080;
-    public static final int CLIENT_IGNORE_SPACE                = 0x00000100;
-    public static final int CLIENT_PROTOCOL_41                 = 0x00000200;
-    public static final int CLIENT_INTERACTIVE                 = 0x00000400;
-    public static final int CLIENT_SSL                         = 0x00000800;
-    public static final int CLIENT_IGNORE_SIGPIPE              = 0x00001000;
-    public static final int CLIENT_TRANSACTIONS                = 0x00002000;
-    public static final int CLIENT_RESERVED                    = 0x00004000;
-    public static final int CLIENT_SECURE_CONNECTION           = 0x00008000;
+    public static final int CLIENT_LONG_PASSWORD               = 0x0001;
+    public static final int CLIENT_FOUND_ROWS                  = 0x0002;
+    public static final int CLIENT_LONG_FLAG                   = 0x0004;
+    public static final int CLIENT_CONNECT_WITH_DB             = 0x0008;
+    public static final int CLIENT_NO_SCHEMA                   = 0x0010;
+    public static final int CLIENT_COMPRESS                    = 0x0020;
+    public static final int CLIENT_ODBC                        = 0x0040;
+    public static final int CLIENT_LOCAL_FILES                 = 0x0080;
+    public static final int CLIENT_IGNORE_SPACE                = 0x0100;
+    public static final int CLIENT_PROTOCOL_41                 = 0x0200;
+    public static final int CLIENT_INTERACTIVE                 = 0x0400;
+    public static final int CLIENT_SSL                         = 0x0800;
+    public static final int CLIENT_IGNORE_SIGPIPE              = 0x1000;
+    public static final int CLIENT_TRANSACTIONS                = 0x2000;
+    public static final int CLIENT_RESERVED                    = 0x4000;
+    public static final int CLIENT_SECURE_CONNECTION           = 0x8000;
     public static final int CLIENT_MULTI_STATEMENTS            = 0x00010000;
     public static final int CLIENT_MULTI_RESULTS               = 0x00020000;
     public static final int CLIENT_PS_MULTI_RESULTS            = 0x00040000;
@@ -148,31 +149,44 @@ public class JMTC_Thread extends Thread {
         // Auth Challenge
         this.readMysql();
         this.processAuthChallengePacket();
+        
+        // Remove Compression and SSL support so we can sniff traffic easily
+        if ((this.serverCapabilityFlags & JMTC_Thread.CLIENT_COMPRESS) != 0) {
+            System.err.print("   Unsetting CLIENT_COMPRESS\n");
+            this.serverCapabilityFlags ^= JMTC_Thread.CLIENT_COMPRESS;
+        }
+        
+        if ((this.serverCapabilityFlags & JMTC_Thread.CLIENT_SSL) != 0) {
+            System.err.print("   Unsetting CLIENT_SSL\n");
+            this.serverCapabilityFlags ^= JMTC_Thread.CLIENT_SSL;
+        }
+        
+        this.offset = this.serverCapabilityFlagsOffset;
+        this.set_fixed_int(2, this.serverCapabilityFlags);
+        
         this.writeClient();
         
         // Auth Response
         this.readClient();
-        this.dumpBuffer();
         this.processAuthResponsePacket();
         
         // Remove Compression and SSL support so we can sniff traffic easily
-        if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_COMPRESS) != 0)
+        if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_COMPRESS) != 0) {
+            System.err.print("   Unsetting CLIENT_COMPRESS\n");
             this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_COMPRESS;
+        }
         
-        if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_SSL) != 0)
+        if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_SSL) != 0) {
+            System.err.print("   Unsetting CLIENT_SSL\n");
             this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_SSL;
-            
-        System.err.print("   New Client Capability Flags: ");
-        this.dumpCapabilityFlags(0);
-        System.err.print("\n");
-            
-        this.offset = 0;
+        }
+        
+        this.offset = 5;
         if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_PROTOCOL_41) != 0)
             this.set_fixed_int(4, this.clientCapabilityFlags);
         else
             this.set_fixed_int(2, this.clientCapabilityFlags);
             
-        this.dumpBuffer();
         this.writeMysql();
         
         // Command Phase!
@@ -206,7 +220,7 @@ public class JMTC_Thread extends Thread {
         int b = 0;
         
         try {
-            while (this.clientIn.available() == 0)
+            while (this.clientIn.available() == 0 && this.running == 1) 
                 Thread.sleep(10);
             
             // Read from the client
@@ -234,7 +248,7 @@ public class JMTC_Thread extends Thread {
         int b = 0;
         
         try {
-            while (this.mysqlIn.available() == 0)
+            while (this.mysqlIn.available() == 0 && this.running == 1)
                 Thread.sleep(10);
             
             // Read from the client
@@ -322,6 +336,7 @@ public class JMTC_Thread extends Thread {
         this.connectionId    = this.get_fixed_int(4);
         this.offset += 8; // challenge-part-1
         this.offset += 1; //filler
+        this.serverCapabilityFlagsOffset = this.offset;
         this.serverCapabilityFlags = this.get_fixed_int(2);
         this.serverCharacterSet = this.get_fixed_int(1);
 
@@ -605,48 +620,50 @@ public class JMTC_Thread extends Thread {
         
         return -1;
     }
-    
+
     public void set_fixed_int(Integer size, Integer value) {
         if (size == 8 && this.buffer.size() >= (this.offset + size)) {
-            this.buffer.set(this.offset+0, value <<  0);
-            this.buffer.set(this.offset+1, value <<  8);
-            this.buffer.set(this.offset+2, value << 16);
-            this.buffer.set(this.offset+3, value << 24);
-            this.buffer.set(this.offset+4, value << 32);
-            this.buffer.set(this.offset+5, value << 40);
-            this.buffer.set(this.offset+6, value << 48);
-            this.buffer.set(this.offset+7, value << 56);
-            this.offset += 8;
+            this.buffer.set(this.offset+0, ((value >>  0) & 0xFF) );
+            this.buffer.set(this.offset+1, ((value >>  8) & 0xFF) );
+            this.buffer.set(this.offset+2, ((value >> 16) & 0xFF) );
+            this.buffer.set(this.offset+3, ((value >> 24) & 0xFF) );
+            this.buffer.set(this.offset+3, ((value >> 32) & 0xFF) );
+            this.buffer.set(this.offset+3, ((value >> 40) & 0xFF) );
+            this.buffer.set(this.offset+3, ((value >> 48) & 0xFF) );
+            this.buffer.set(this.offset+3, ((value >> 56) & 0xFF) );
+            
+            this.offset += size;
             return;
         }
         
+
         if (size == 4 && this.buffer.size() >= (this.offset + size)) {
-            this.buffer.set(this.offset+0, value <<  0);
-            this.buffer.set(this.offset+1, value <<  8);
-            this.buffer.set(this.offset+2, value << 16);
-            this.buffer.set(this.offset+3, value << 24);
-            this.offset += 4;
+            this.buffer.set(this.offset+0, ((value >>  0) & 0xFF) );
+            this.buffer.set(this.offset+1, ((value >>  8) & 0xFF) );
+            this.buffer.set(this.offset+2, ((value >> 16) & 0xFF) );
+            this.buffer.set(this.offset+3, ((value >> 24) & 0xFF) );
+            this.offset += size;
             return;
         }
         
         if (size == 3 && this.buffer.size() >= (this.offset + size)) {
-            this.buffer.set(this.offset+0, value <<  0);
-            this.buffer.set(this.offset+1, value <<  8);
-            this.buffer.set(this.offset+2, value << 16);
-            this.offset += 3;
+            this.buffer.set(this.offset+0, ((value >>  0) & 0xFF) );
+            this.buffer.set(this.offset+1, ((value >>  8) & 0xFF) );
+            this.buffer.set(this.offset+2, ((value >> 16) & 0xFF) );
+            this.offset += size;
             return;
         }
         
         if (size == 2 && this.buffer.size() >= (this.offset + size)) {
-            this.buffer.set(this.offset+0, value <<  0);
-            this.buffer.set(this.offset+1, value <<  8);
-            this.offset += 2;
+            this.buffer.set(this.offset+0, ((value >>  0) & 0xFF) );
+            this.buffer.set(this.offset+1, ((value >>  8) & 0xFF) );
+            this.offset += size;
             return;
         }
         
         if (size == 1 && this.buffer.size() >= (this.offset + size)) {
-            this.buffer.set(this.offset+0, value <<  0);
-            this.offset += 1;
+            this.buffer.set(this.offset+0, ((value >>  0) & 0xFF) );
+            this.offset += size;
             return;
         }
         
