@@ -3,7 +3,7 @@ import java.net.*;
 import java.util.*;
 import java.net.ServerSocket;
 
-public class JMTC {
+public class JMP {
     public static void main(String[] args) throws IOException {
         String mysqlHost = System.getProperty("mysqlHost");
         int mysqlPort = Integer.parseInt(System.getProperty("mysqlPort"));
