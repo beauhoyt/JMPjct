@@ -171,43 +171,43 @@ public class Proxy extends Thread {
                 
                 case Proxy.MODE_READ_HANDSHAKE:
                     System.err.print("MODE_READ_HANDSHAKE\n");
-                    this.read_handshake();
                     this.nextMode = Proxy.MODE_READ_AUTH;
+                    this.read_handshake();
                     this.call_plugins();
                     break;
                 
                 case Proxy.MODE_READ_AUTH:
                     System.err.print("MODE_READ_AUTH\n");
-                    this.read_auth();
                     this.nextMode = Proxy.MODE_READ_AUTH_RESULT;
+                    this.read_auth();
                     this.call_plugins();
                     break;
                 
                 case Proxy.MODE_READ_AUTH_RESULT:
                     System.err.print("MODE_READ_AUTH_RESULT\n");
-                    this.read_auth_result();
                     this.nextMode = Proxy.MODE_READ_QUERY;
+                    this.read_auth_result();
                     this.call_plugins();
                     break;
                 
                 case Proxy.MODE_READ_QUERY:
                     System.err.print("MODE_READ_QUERY\n");
-                    this.read_query();
                     this.nextMode = Proxy.MODE_READ_QUERY_RESULT;
+                    this.read_query();
                     this.call_plugins();
                     break;
                 
                 case Proxy.MODE_READ_QUERY_RESULT:
                     System.err.print("MODE_READ_QUERY_RESULT\n");
-                    this.read_query_result();
                     this.nextMode = Proxy.MODE_SEND_QUERY_RESULT;
+                    this.read_query_result();
                     this.call_plugins();
                     break;
                 
                 case Proxy.MODE_SEND_QUERY_RESULT:
                     System.err.print("MODE_SEND_QUERY_RESULT\n");
-                    this.send_query_result();
                     this.nextMode = Proxy.MODE_READ_QUERY;
+                    this.send_query_result();
                     this.call_plugins();
                     break;
                 
