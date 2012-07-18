@@ -6,6 +6,7 @@ import org.apache.commons.io.*;
 public class Plugin_Debug implements Proxy_Plugin {
     public void init(Proxy context) {
         System.err.print("Plugin_Debug->init\n");
+        System.err.print("Connected to mysql server at "+context.mysqlHost+":"+context.mysqlPort+"\n\n");
         return;
     }
     

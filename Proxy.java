@@ -60,81 +60,81 @@ public class Proxy extends Thread {
     // Allow plugins to muck with the modes
     public int nextMode = 0;
     
-    public static final int MODE_INIT               = 0; // Connection opened
-    public static final int MODE_READ_HANDSHAKE     = 1; // Read the handshake from the server, process it, and forward it
-    public static final int MODE_READ_AUTH          = 2; // Read the reply from the client, process it, and forward it
-    public static final int MODE_READ_AUTH_RESULT   = 3; // Read the reply from the server, process it and forward it
-    public static final int MODE_READ_QUERY         = 4; // Read the query from the client, process it, and forward
-    public static final int MODE_READ_QUERY_RESULT  = 5; // Read the result set from the server, and process it
-    public static final int MODE_SEND_QUERY_RESULT  = 6; // Send a result set to the client
-    public static final int MODE_CLEANUP            = 7; // Connection closed
+    public static final int MODE_INIT                           = 0; // Connection opened
+    public static final int MODE_READ_HANDSHAKE                 = 1; // Read the handshake from the server, process it, and forward it
+    public static final int MODE_READ_AUTH                      = 2; // Read the reply from the client, process it, and forward it
+    public static final int MODE_READ_AUTH_RESULT               = 3; // Read the reply from the server, process it and forward it
+    public static final int MODE_READ_QUERY                     = 4; // Read the query from the client, process it, and forward
+    public static final int MODE_READ_QUERY_RESULT              = 5; // Read the result set from the server, and process it
+    public static final int MODE_SEND_QUERY_RESULT              = 6; // Send a result set to the client
+    public static final int MODE_CLEANUP                        = 7; // Connection closed
     
     // Packet types
-    public static final int COM_QUIT                = 0x01;
-    public static final int COM_INIT_DB             = 0x02;
-    public static final int COM_QUERY               = 0x03;
-    public static final int COM_FIELD_LIST          = 0x04;
-    public static final int COM_CREATE_DB           = 0x05;
-    public static final int COM_DROP_DB             = 0x06;
-    public static final int COM_REFRESH             = 0x07;
-    public static final int COM_SHUTDOWN            = 0x08;
-    public static final int COM_STATISTICS          = 0x09;
-    public static final int COM_PROCESS_INFO        = 0x0a;
-    public static final int COM_PROCESS_KILL        = 0x0c;
-    public static final int COM_DEBUG               = 0x0d;
-    public static final int COM_PING                = 0x0e;
-    public static final int COM_CHANGE_USER         = 0x11;
-    public static final int COM_BINLOG_DUMP         = 0x12;
-    public static final int COM_TABLE_DUMP          = 0x13;
-    public static final int COM_CONNECT_OUT         = 0x14;
-    public static final int COM_REGISTER_SLAVE      = 0x15;
-    public static final int COM_STMT_PREPARE        = 0x16;
-    public static final int COM_STMT_EXECUTE        = 0x17;
-    public static final int COM_STMT_SEND_LONG_DATA = 0x18;
-    public static final int COM_STMT_CLOSE          = 0x19;
-    public static final int COM_STMT_RESET          = 0x1a;
-    public static final int COM_SET_OPTION          = 0x1b;
-    public static final int COM_STMT_FETCH          = 0x1c;
-    public static final int COM_UNKNOWN             = 0xff;
+    public static final int COM_QUIT                            = 0x01;
+    public static final int COM_INIT_DB                         = 0x02;
+    public static final int COM_QUERY                           = 0x03;
+    public static final int COM_FIELD_LIST                      = 0x04;
+    public static final int COM_CREATE_DB                       = 0x05;
+    public static final int COM_DROP_DB                         = 0x06;
+    public static final int COM_REFRESH                         = 0x07;
+    public static final int COM_SHUTDOWN                        = 0x08;
+    public static final int COM_STATISTICS                      = 0x09;
+    public static final int COM_PROCESS_INFO                    = 0x0a;
+    public static final int COM_PROCESS_KILL                    = 0x0c;
+    public static final int COM_DEBUG                           = 0x0d;
+    public static final int COM_PING                            = 0x0e;
+    public static final int COM_CHANGE_USER                     = 0x11;
+    public static final int COM_BINLOG_DUMP                     = 0x12;
+    public static final int COM_TABLE_DUMP                      = 0x13;
+    public static final int COM_CONNECT_OUT                     = 0x14;
+    public static final int COM_REGISTER_SLAVE                  = 0x15;
+    public static final int COM_STMT_PREPARE                    = 0x16;
+    public static final int COM_STMT_EXECUTE                    = 0x17;
+    public static final int COM_STMT_SEND_LONG_DATA             = 0x18;
+    public static final int COM_STMT_CLOSE                      = 0x19;
+    public static final int COM_STMT_RESET                      = 0x1a;
+    public static final int COM_SET_OPTION                      = 0x1b;
+    public static final int COM_STMT_FETCH                      = 0x1c;
+    public static final int COM_UNKNOWN                         = 0xff;
     
-    public static final int OK  = 0x00;
-    public static final int ERR = 0xff;
-    public static final int EOF = 0xfe;
+    public static final int OK                                  = 0x00;
+    public static final int ERR                                 = 0xff;
+    public static final int EOF                                 = 0xfe;
     
-    public static final int SERVER_STATUS_IN_TRANS             = 0x0001;
-    public static final int SERVER_STATUS_AUTOCOMMIT           = 0x0002;
-    public static final int SERVER_MORE_RESULTS_EXISTS         = 0x0008;
-    public static final int SERVER_STATUS_NO_GOOD_INDEX_USED   = 0x0010;
-    public static final int SERVER_STATUS_NO_INDEX_USED        = 0x0020;
-    public static final int SERVER_STATUS_CURSOR_EXISTS        = 0x0040;
-    public static final int SERVER_STATUS_LAST_ROW_SENT        = 0x0080;
-    public static final int SERVER_STATUS_DB_DROPPED           = 0x0100;
-    public static final int SERVER_STATUS_NO_BACKSLASH_ESCAPES = 0x0200;
-    public static final int SERVER_STATUS_METADATA_CHANGED     = 0x0400;
-    public static final int SERVER_QUERY_WAS_SLOW              = 0x0800;
-    public static final int SERVER_PS_OUT_PARAMS               = 0x1000;
+    public static final int SERVER_STATUS_IN_TRANS              = 0x0001;
+    public static final int SERVER_STATUS_AUTOCOMMIT            = 0x0002;
+    public static final int SERVER_MORE_RESULTS_EXISTS          = 0x0008;
+    public static final int SERVER_STATUS_NO_GOOD_INDEX_USED    = 0x0010;
+    public static final int SERVER_STATUS_NO_INDEX_USED         = 0x0020;
+    public static final int SERVER_STATUS_CURSOR_EXISTS         = 0x0040;
+    public static final int SERVER_STATUS_LAST_ROW_SENT         = 0x0080;
+    public static final int SERVER_STATUS_DB_DROPPED            = 0x0100;
+    public static final int SERVER_STATUS_NO_BACKSLASH_ESCAPES  = 0x0200;
+    public static final int SERVER_STATUS_METADATA_CHANGED      = 0x0400;
+    public static final int SERVER_QUERY_WAS_SLOW               = 0x0800;
+    public static final int SERVER_PS_OUT_PARAMS                = 0x1000;
     
-    public static final int CLIENT_LONG_PASSWORD               = 0x0001;
-    public static final int CLIENT_FOUND_ROWS                  = 0x0002;
-    public static final int CLIENT_LONG_FLAG                   = 0x0004;
-    public static final int CLIENT_CONNECT_WITH_DB             = 0x0008;
-    public static final int CLIENT_NO_SCHEMA                   = 0x0010;
-    public static final int CLIENT_COMPRESS                    = 0x0020;
-    public static final int CLIENT_ODBC                        = 0x0040;
-    public static final int CLIENT_LOCAL_FILES                 = 0x0080;
-    public static final int CLIENT_IGNORE_SPACE                = 0x0100;
-    public static final int CLIENT_PROTOCOL_41                 = 0x0200;
-    public static final int CLIENT_INTERACTIVE                 = 0x0400;
-    public static final int CLIENT_SSL                         = 0x0800;
-    public static final int CLIENT_IGNORE_SIGPIPE              = 0x1000;
-    public static final int CLIENT_TRANSACTIONS                = 0x2000;
-    public static final int CLIENT_RESERVED                    = 0x4000;
-    public static final int CLIENT_SECURE_CONNECTION           = 0x8000;
-    public static final int CLIENT_MULTI_STATEMENTS            = 0x00010000;
-    public static final int CLIENT_MULTI_RESULTS               = 0x00020000;
-    public static final int CLIENT_PS_MULTI_RESULTS            = 0x00040000;
-    public static final int CLIENT_SSL_VERIFY_SERVER_CERT      = 0x40000000;
-    public static final int CLIENT_REMEMBER_OPTIONS            = 0x80000000;
+    public static final int CLIENT_LONG_PASSWORD                = 0x0001;
+    public static final int CLIENT_FOUND_ROWS                   = 0x0002;
+    public static final int CLIENT_LONG_FLAG                    = 0x0004;
+    public static final int CLIENT_CONNECT_WITH_DB              = 0x0008;
+    public static final int CLIENT_NO_SCHEMA                    = 0x0010;
+    public static final int CLIENT_COMPRESS                     = 0x0020;
+    public static final int CLIENT_ODBC                         = 0x0040;
+    public static final int CLIENT_LOCAL_FILES                  = 0x0080;
+    public static final int CLIENT_IGNORE_SPACE                 = 0x0100;
+    public static final int CLIENT_PROTOCOL_41                  = 0x0200;
+    public static final int CLIENT_INTERACTIVE                  = 0x0400;
+    public static final int CLIENT_SSL                          = 0x0800;
+    public static final int CLIENT_IGNORE_SIGPIPE               = 0x1000;
+    public static final int CLIENT_TRANSACTIONS                 = 0x2000;
+    public static final int CLIENT_RESERVED                     = 0x4000;
+    public static final int CLIENT_SECURE_CONNECTION            = 0x8000;
+    public static final int CLIENT_MULTI_STATEMENTS             = 0x00010000;
+    public static final int CLIENT_MULTI_RESULTS                = 0x00020000;
+    public static final int CLIENT_PS_MULTI_RESULTS             = 0x00040000;
+    public static final int CLIENT_SSL_VERIFY_SERVER_CERT       = 0x40000000;
+    public static final int CLIENT_REMEMBER_OPTIONS             = 0x80000000;
     
     
     public Proxy(Socket clientSocket, String mysqlHost, int mysqlPort, ArrayList<Proxy_Plugin> plugins) {
@@ -151,7 +151,6 @@ public class Proxy extends Thread {
             this.mysqlSocket = new Socket(this.mysqlHost, this.mysqlPort);
             this.mysqlIn = this.mysqlSocket.getInputStream();
             this.mysqlOut = this.mysqlSocket.getOutputStream();
-            System.err.print("Connected to mysql server at "+this.mysqlHost+":"+this.mysqlPort+"\n\n");
         }
         catch (IOException e) {
             return;
@@ -229,6 +228,11 @@ public class Proxy extends Thread {
         System.err.print("Exiting thread.\n");
     }
     
+    public void halt() {
+        this.mode = Proxy.MODE_CLEANUP;
+        this.nextMode = Proxy.MODE_CLEANUP;
+    }
+    
     public void call_plugins() {
         for (int i = 0; i < this.plugins.size(); i++) {
             Proxy_Plugin plugin = this.plugins.get(i);
@@ -267,7 +271,7 @@ public class Proxy extends Thread {
                 
                 default:
                     System.err.print("UNKNOWN MODE "+this.mode+"\n");
-                    this.running = 0;
+                    this.halt();
                     break;
             }
         }
@@ -325,7 +329,7 @@ public class Proxy extends Thread {
             for (int i = 0; i < (3+1); i++) {
                 b = in.read();
                 if (b == -1) {
-                    this.running = 0;
+                    this.halt();
                     return;
                 }
                 this.buffer.add(b);
@@ -336,7 +340,7 @@ public class Proxy extends Thread {
             for (int i = 0; i < size; i++) {
                 b = in.read();
                 if (b == -1) {
-                    this.running = 0;
+                    this.halt();
                     return;
                 }
                 this.buffer.add(b);
@@ -344,11 +348,11 @@ public class Proxy extends Thread {
         }
         catch (IOException e) {
             System.err.print("IOException.\n");
-            this.running = 0;
+            this.halt();
         }
         catch (InterruptedException e) {
             System.err.print("InterruptedException.\n");
-            this.running = 0;
+            this.halt();
         }
     }
     
@@ -365,18 +369,18 @@ public class Proxy extends Thread {
                 b = in.read();
                 
                 if (b == -1) {
-                    this.running = 0;
+                    this.halt();
                     return;
                 }
                 this.buffer.add(b);
             }
         }
         catch (IOException e) {
-            this.running = 0;
+            this.halt();
             System.err.print("IOException.\n");
         }
         catch (InterruptedException e) {
-            this.running = 0;
+            this.halt();
             System.err.print("InterruptedException.\n");
         }
     }
@@ -394,7 +398,7 @@ public class Proxy extends Thread {
             this.clear_buffer();
         }
         catch (IOException e) {
-            this.running = 0;
+            this.halt();
             System.err.print("IOException.\n");
         }
     }
@@ -430,7 +434,7 @@ public class Proxy extends Thread {
     public void read_auth_result() {
         this.read_unsized_packet(this.mysqlIn);
         if (this.packetType != Proxy.OK)
-            this.running = 0;
+            this.halt();
         this.write(this.clientOut);
     }
     
@@ -508,7 +512,7 @@ public class Proxy extends Thread {
         
         switch (this.packetType) {
             case Proxy.COM_QUIT:
-                this.running = 0;
+                this.halt();
                 break;
             
             // Extract out the new default schema
@@ -641,6 +645,7 @@ public class Proxy extends Thread {
         }
         
         System.err.print("Decoding int at offset "+this.offset+" failed!");
+        this.halt();
         return -1;
     }
 
@@ -691,6 +696,7 @@ public class Proxy extends Thread {
         }
         
         System.err.print("Setting int "+size+": "+value+" at offset "+this.offset+" failed!\n");
+        this.halt();
         return;
     }
     
