@@ -10,7 +10,7 @@ public class JMTC {
         int port = Integer.parseInt(System.getProperty("port"));
         boolean listening = true;
         ServerSocket listener = null;
-        ArrayList<Class<? extends Proxy_Plugin>> plugins = new ArrayList<Class<? extends Proxy_Plugin>>();
+        ArrayList<Proxy_Plugin> plugins = new ArrayList<Proxy_Plugin>();
         
         try {
             listener = new ServerSocket(port);
@@ -19,6 +19,8 @@ public class JMTC {
             System.out.println("Could not listen on port");
             System.exit(-1);
         }
+        
+        plugins.add(new Plugin_Debug());
         
         while (listening)
             new Proxy(listener.accept(), mysqlHost, mysqlPort, plugins).start();

@@ -20,7 +20,7 @@ public class Proxy extends Thread {
     public OutputStream clientOut = null;
     
     // Plugins
-    public ArrayList<Class<? extends Proxy_Plugin>> plugins = new ArrayList<Class<? extends Proxy_Plugin>>();
+    public ArrayList<Proxy_Plugin> plugins = new ArrayList<Proxy_Plugin>();
     
     // Packet Buffer. ArrayList so we can grow/shrink dynamically
     public ArrayList<Integer> buffer = new ArrayList<Integer>();
@@ -134,7 +134,7 @@ public class Proxy extends Thread {
     public static final int CLIENT_REMEMBER_OPTIONS            = 0x80000000;
     
     
-    public Proxy(Socket clientSocket, String mysqlHost, int mysqlPort, ArrayList<Class<? extends Proxy_Plugin>> plugins) {
+    public Proxy(Socket clientSocket, String mysqlHost, int mysqlPort, ArrayList<Proxy_Plugin> plugins) {
         this.clientSocket = clientSocket;
         this.mysqlHost = mysqlHost;
         this.mysqlPort = mysqlPort;
@@ -163,47 +163,55 @@ public class Proxy extends Thread {
             switch (this.mode) {
                 case Proxy.MODE_INIT:
                     System.err.print("MODE_INIT\n");
+                    this.call_plugins();
                     this.mode = Proxy.MODE_READ_HANDSHAKE;
                     break;
                 
                 case Proxy.MODE_READ_HANDSHAKE:
                     System.err.print("MODE_READ_HANDSHAKE\n");
                     this.read_handshake();
+                    this.call_plugins();
                     this.mode = Proxy.MODE_READ_AUTH;
                     break;
                 
                 case Proxy.MODE_READ_AUTH:
                     System.err.print("MODE_READ_AUTH\n");
                     this.read_auth();
+                    this.call_plugins();
                     this.mode = Proxy.MODE_READ_AUTH_RESULT;
                     break;
                 
                 case Proxy.MODE_READ_AUTH_RESULT:
                     System.err.print("MODE_READ_AUTH_RESULT\n");
                     this.read_auth_result();
+                    this.call_plugins();
                     this.mode = Proxy.MODE_READ_QUERY;
                     break;
                 
                 case Proxy.MODE_READ_QUERY:
                     System.err.print("MODE_READ_QUERY\n");
                     this.read_query();
+                    this.call_plugins();
                     this.mode = Proxy.MODE_READ_QUERY_RESULT;
                     break;
                 
                 case Proxy.MODE_READ_QUERY_RESULT:
                     System.err.print("MODE_READ_QUERY_RESULT\n");
                     this.read_query_result();
+                    this.call_plugins();
                     this.mode = Proxy.MODE_SEND_QUERY_RESULT;
                     break;
                 
                 case Proxy.MODE_SEND_QUERY_RESULT:
                     System.err.print("MODE_SEND_QUERY_RESULT\n");
                     this.send_query_result();
+                    this.call_plugins();
                     this.mode = Proxy.MODE_READ_QUERY;
                     break;
                 
                 case Proxy.MODE_CLEANUP:
                     System.err.print("MODE_CLEANUP\n");
+                    this.call_plugins();
                     this.running = 0;
                     break;
                 
@@ -215,6 +223,51 @@ public class Proxy extends Thread {
             
         }
         System.err.print("Exiting thread.\n");
+    }
+    
+    public void call_plugins() {
+        for (int i = 0; i < this.plugins.size(); i++) {
+            Proxy_Plugin plugin = this.plugins.get(i);
+            switch (this.mode) {
+                case Proxy.MODE_INIT:
+                    plugin.init(this);
+                    break;
+                
+                case Proxy.MODE_READ_HANDSHAKE:
+                    plugin.read_handshake(this);
+                    break;
+                
+                case Proxy.MODE_READ_AUTH:
+                    plugin.read_auth(this);
+                    break;
+                
+                case Proxy.MODE_READ_AUTH_RESULT:
+                    plugin.read_auth_result(this);
+                    break;
+                
+                case Proxy.MODE_READ_QUERY:
+                    plugin.read_query(this);
+                    break;
+                
+                case Proxy.MODE_READ_QUERY_RESULT:
+                    plugin.read_query_result(this);
+                    break;
+                
+                case Proxy.MODE_SEND_QUERY_RESULT:
+                    plugin.send_query_result(this);
+                    break;
+                
+                case Proxy.MODE_CLEANUP:
+                    plugin.cleanup(this);
+                    break;
+                
+                default:
+                    System.err.print("UNKNOWN MODE "+this.mode+"\n");
+                    this.running = 0;
+                    break;
+            }
+        }
+        
     }
     
     public void clear_buffer() {
