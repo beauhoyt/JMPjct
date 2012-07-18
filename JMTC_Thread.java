@@ -53,11 +53,16 @@ public class JMTC_Thread extends Thread {
     
     // Modes
     private int mode = 0;
-    public static final int MODE_AUTH_CHALLENGE    = 1;
-    public static final int MODE_AUTH_RESPONSE     = 2;
-    public static final int MODE_AUTH_FINISH       = 3;
-    public static final int MODE_CMD_CLIENT        = 4;
-    public static final int MODE_CMD_SERVER        = 5;
+    
+    public static final int MODE_INIT               = 0; // Connection opened
+    public static final int MODE_READ_HANDSHAKE     = 1; // Read the handshake from the server, process it, and forward it
+    public static final int MODE_READ_AUTH          = 2; // Read the reply from the client, process it, and forward it
+    public static final int MODE_READ_AUTH_RESULT   = 3; // Read the reply from the server, process it and forward it
+    public static final int MODE_READ_QUERY         = 4; // Read the query from the client, process it, and forward
+    public static final int MODE_PROXY_QUERY_RESULT = 5; // Just proxy the result set back to the client, no processing
+    public static final int MODE_READ_QUERY_RESULT  = 6; // Read the result set from the server, and process it
+    public static final int MODE_SEND_QUERY_RESULT  = 7; // Send a result set to the client
+    public static final int MODE_CLEANUP            = 8; // Connection closed
     
     // Packet types
     public static final int COM_QUIT                = 0x01;
@@ -147,34 +152,49 @@ public class JMTC_Thread extends Thread {
     }
 
     public void run() {
-        this.mode = JMTC_Thread.MODE_AUTH_CHALLENGE;
+        this.mode = JMTC_Thread.MODE_READ_HANDSHAKE;
 
         while (this.running == 1) {
             
             switch (this.mode) {
-                case JMTC_Thread.MODE_AUTH_CHALLENGE:
-                    System.err.print("MODE_AUTH_CHALLENGE\n");
-                    this.process_auth_challenge_packet();
+                case JMTC_Thread.MODE_READ_HANDSHAKE:
+                    System.err.print("MODE_READ_HANDSHAKE\n");
+                    this.read_handshake();
                     break;
                 
-                case JMTC_Thread.MODE_AUTH_RESPONSE:
-                    System.err.print("MODE_AUTH_RESPONSE\n");
-                    this.process_auth_response_packet();
+                case JMTC_Thread.MODE_READ_AUTH:
+                    System.err.print("MODE_READ_AUTH\n");
+                    this.read_auth();
                     break;
                 
-                case JMTC_Thread.MODE_AUTH_FINISH:
-                    System.err.print("MODE_AUTH_FINISH\n");
-                    this.process_auth_finish();
+                case JMTC_Thread.MODE_READ_AUTH_RESULT:
+                    System.err.print("MODE_READ_AUTH_RESULT\n");
+                    this.read_auth_result();
                     break;
                 
-                case JMTC_Thread.MODE_CMD_CLIENT:
-                    System.err.print("MODE_CMD_CLIENT\n");
-                    this.process_client_packet();
+                case JMTC_Thread.MODE_READ_QUERY:
+                    System.err.print("MODE_READ_QUERY\n");
+                    this.read_query();
                     break;
                 
-                case JMTC_Thread.MODE_CMD_SERVER:
-                    System.err.print("MODE_CMD_SERVER\n");
-                    this.process_server_packet();
+                case JMTC_Thread.MODE_PROXY_QUERY_RESULT:
+                    System.err.print("MODE_PROXY_QUERY_RESULT\n");
+                    this.read_query_result();
+                    break;
+                
+                case JMTC_Thread.MODE_READ_QUERY_RESULT:
+                    System.err.print("MODE_READ_QUERY_RESULT\n");
+                    this.read_query_result();
+                    break;
+                
+                case JMTC_Thread.MODE_SEND_QUERY_RESULT:
+                    System.err.print("MODE_SEND_QUERY_RESULT\n");
+                    this.read_query_result();
+                    break;
+                
+                case JMTC_Thread.MODE_CLEANUP:
+                    System.err.print("MODE_CLEANUP\n");
+                    this.running = 0;
                     break;
                 
                 default:
@@ -190,19 +210,22 @@ public class JMTC_Thread extends Thread {
         this.offset = 0;
         this.buffer.clear();
     }
-
-    public void read_client() {
+    
+    public void read_sized_packet(InputStream in) {
         int b = 0;
-        
+        int size = 0;
         try {
-            while (this.clientIn.available() == 0 && this.running == 1) 
-                Thread.sleep(10);
-            
-            // Read from the client
-            while (this.clientIn.available() > 0) {
-
+            for (int i = 0; i < 3; i++) {
                 b = this.clientIn.read();
-                
+                if (b == -1) {
+                    this.running = 0;
+                    return;
+                }
+                this.buffer.add(b);
+            }
+            size = this.get_packet_size();
+            for (int i = 0; i < size; i++) {
+                b = this.clientIn.read();
                 if (b == -1) {
                     this.running = 0;
                     return;
@@ -213,22 +236,20 @@ public class JMTC_Thread extends Thread {
         catch (IOException e) {
             this.running = 0;
         }
-        catch (InterruptedException e) {
-            this.running = 0;
-        }
     }
-
-    public void read_mysql() {
+    
+    public void read_unsized_packet(InputStream in) {
         int b = 0;
         
         try {
-            while (this.mysqlIn.available() == 0 && this.running == 1)
+            while (in.available() == 0 && this.running == 1) 
                 Thread.sleep(10);
             
             // Read from the client
-            while (this.mysqlIn.available() > 0) {
+            while (in.available() > 0) {
+
+                b = in.read();
                 
-                b = this.mysqlIn.read();
                 if (b == -1) {
                     this.running = 0;
                     return;
@@ -244,7 +265,7 @@ public class JMTC_Thread extends Thread {
         }
     }
     
-    public void write_client() {
+    public void write(OutputStream out) {
         int size = this.buffer.size();
         int i = 0;
         
@@ -253,24 +274,7 @@ public class JMTC_Thread extends Thread {
         
         try {
             for (i = 0; i < size; i++)
-                this.clientOut.write(this.buffer.get(i));
-            this.clear_buffer();
-        }
-        catch (IOException e) {
-            this.running = 0;
-        }
-    }
-
-    public void write_mysql() {
-        int size = this.buffer.size();
-        int i = 0;
-        
-        if (size == 0)
-            return;
-        
-        try {
-            for (i = 0; i < size; i++)
-                this.mysqlOut.write(this.buffer.get(i));
+                out.write(this.buffer.get(i));
             this.clear_buffer();
         }
         catch (IOException e) {
@@ -299,8 +303,8 @@ public class JMTC_Thread extends Thread {
         }
     }
     
-    public void process_auth_challenge_packet() {
-        this.read_mysql();
+    public void read_handshake() {
+        this.read_unsized_packet(this.mysqlIn);
         
         this.offset = 0;
         this.protocolVersion = this.get_fixed_int(1);
@@ -332,22 +336,22 @@ public class JMTC_Thread extends Thread {
         this.dump_capability_flags(1);
         System.err.print("\n\n");
         
-        this.write_client();
+        this.write(this.clientOut);
         
-        this.mode = JMTC_Thread.MODE_AUTH_RESPONSE;
+        this.mode = JMTC_Thread.MODE_READ_AUTH;
     }
     
-    public void process_auth_finish() {
-        this.read_mysql();
+    public void read_auth_result() {
+        this.read_unsized_packet(this.mysqlIn);
         if (this.packetType != JMTC_Thread.OK)
             this.running = 0;
-        this.write_client();
+        this.write(this.clientOut);
         
-        this.mode = JMTC_Thread.MODE_CMD_CLIENT;
+        this.mode = JMTC_Thread.MODE_READ_QUERY;
     }
     
-    public void process_auth_response_packet() {
-        this.read_client();
+    public void read_auth() {
+        this.read_unsized_packet(this.clientIn);
         
         this.offset = 5;
         this.clientCapabilityFlags = this.get_fixed_int(2);
@@ -362,6 +366,15 @@ public class JMTC_Thread extends Thread {
             
             if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_SSL) != 0)
                 this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_SSL;
+                
+            if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_MULTI_STATEMENTS) != 0)
+                this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_MULTI_STATEMENTS;
+                
+            if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_MULTI_RESULTS) != 0)
+                this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_MULTI_RESULTS;
+                
+            if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_PS_MULTI_RESULTS) != 0)
+                this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_PS_MULTI_RESULTS;
             
             this.set_fixed_int(4, this.clientCapabilityFlags);
         
@@ -405,8 +418,8 @@ public class JMTC_Thread extends Thread {
         this.dump_capability_flags(0);
         System.err.print("\n\n");
         
-        this.write_mysql();
-        this.mode = JMTC_Thread.MODE_AUTH_FINISH;
+        this.write(this.mysqlOut);
+        this.mode = JMTC_Thread.MODE_READ_AUTH_RESULT;
         
     }
     
@@ -484,11 +497,11 @@ public class JMTC_Thread extends Thread {
         }
     }
     
-    public void process_client_packet() {
-        if (this.mode < JMTC_Thread.MODE_AUTH_FINISH)
+    public void read_query() {
+        if (this.mode < JMTC_Thread.MODE_READ_AUTH_RESULT)
             return;
         
-        this.read_client();
+        this.read_unsized_packet(this.clientIn);
         
         this.get_packet_size();
         this.packetType = this.buffer.get(4);
@@ -520,15 +533,15 @@ public class JMTC_Thread extends Thread {
                 break;
         }
         
-        this.write_mysql();
-        this.mode = JMTC_Thread.MODE_CMD_SERVER;
+        this.write(this.mysqlOut);
+        this.mode = JMTC_Thread.MODE_READ_QUERY_RESULT;
     }
     
-    public void process_server_packet() {
-        if (this.mode < JMTC_Thread.MODE_AUTH_FINISH)
+    public void read_query_result() {
+        if (this.mode < JMTC_Thread.MODE_READ_AUTH_RESULT)
             return;
         
-        this.read_mysql();
+        this.read_unsized_packet(this.mysqlIn);
         
         this.get_packet_size();
         this.packetType = this.buffer.get(4);
@@ -537,7 +550,7 @@ public class JMTC_Thread extends Thread {
         switch (this.packetType) {
             case JMTC_Thread.OK:
                 
-                if (this.mode >= JMTC_Thread.MODE_AUTH_FINISH) {
+                if (this.mode >= JMTC_Thread.MODE_READ_AUTH_RESULT) {
                     this.offset = 5;
                     this.affectedRows = this.get_lenenc_int();
                     this.lastInsertId = this.get_lenenc_int();
@@ -560,7 +573,7 @@ public class JMTC_Thread extends Thread {
                 break;
             
             case JMTC_Thread.ERR:
-                if (this.mode >= JMTC_Thread.MODE_AUTH_FINISH) {
+                if (this.mode >= JMTC_Thread.MODE_READ_AUTH_RESULT) {
                     this.offset = 5;
                     this.errorCode    = this.get_fixed_int(2);
                     this.offset++;
@@ -576,9 +589,9 @@ public class JMTC_Thread extends Thread {
                 break;
         }
         
-        this.write_client();
+        this.write(this.clientOut);
         
-        this.mode = JMTC_Thread.MODE_CMD_CLIENT;
+        this.mode = JMTC_Thread.MODE_READ_QUERY;
     }
     
     public int get_packet_size() {
