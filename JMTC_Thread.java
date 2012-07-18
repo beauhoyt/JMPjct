@@ -94,6 +94,7 @@ public class JMTC_Thread extends Thread {
     
     public static final int OK  = 0x00;
     public static final int ERR = 0xff;
+    public static final int EOF = 0xfe;
     
     public static final int SERVER_STATUS_IN_TRANS             = 0x0001;
     public static final int SERVER_STATUS_AUTOCOMMIT           = 0x0002;
@@ -211,21 +212,63 @@ public class JMTC_Thread extends Thread {
         this.buffer.clear();
     }
     
+    public void read_full_result_set(InputStream in) {
+        // Assume we have the start of a result set already
+        this.offset = 4;
+        Integer colCount = this.get_lenenc_int();
+        
+        // Assume we have a result set
+        ArrayList<Integer> resultset = new ArrayList<Integer>();
+        resultset.addAll(this.buffer);
+        
+        for (int i = 0; i < (colCount+1); i++) {
+            this.clear_buffer();
+            this.read_sized_packet(this.mysqlIn);
+            resultset.addAll(this.buffer);
+        }
+        
+        do {
+            this.clear_buffer();
+            this.read_sized_packet(this.mysqlIn);
+            resultset.addAll(this.buffer);
+        } while(this.buffer.get(4) != this.EOF);
+        
+        // Do we have more results?
+        this.offset=7;
+        Integer statusFlags = this.get_fixed_int(2);
+        if ((statusFlags & JMTC_Thread.SERVER_MORE_RESULTS_EXISTS) != 0) {
+            this.clear_buffer();
+            this.read_sized_packet(this.mysqlIn);
+            this.read_full_result_set(this.mysqlIn);
+        }
+        else
+            this.clear_buffer();
+        
+        // Prepend the result set to the buffer. This should transverse the stack correctly
+        this.buffer.addAll(0, resultset);
+    }
+    
     public void read_sized_packet(InputStream in) {
         int b = 0;
         int size = 0;
         try {
-            for (int i = 0; i < 3; i++) {
-                b = this.clientIn.read();
+            while (in.available() == 0 && this.running == 1) 
+                Thread.sleep(10);
+            
+            // Read size (3) and Sequence id (1)
+            for (int i = 0; i < (3+1); i++) {
+                b = in.read();
                 if (b == -1) {
                     this.running = 0;
                     return;
                 }
                 this.buffer.add(b);
             }
+
             size = this.get_packet_size();
+            
             for (int i = 0; i < size; i++) {
-                b = this.clientIn.read();
+                b = in.read();
                 if (b == -1) {
                     this.running = 0;
                     return;
@@ -234,6 +277,11 @@ public class JMTC_Thread extends Thread {
             }
         }
         catch (IOException e) {
+            System.err.print("IOException.\n");
+            this.running = 0;
+        }
+        catch (InterruptedException e) {
+            System.err.print("InterruptedException.\n");
             this.running = 0;
         }
     }
@@ -259,9 +307,11 @@ public class JMTC_Thread extends Thread {
         }
         catch (IOException e) {
             this.running = 0;
+            System.err.print("IOException.\n");
         }
         catch (InterruptedException e) {
             this.running = 0;
+            System.err.print("InterruptedException.\n");
         }
     }
     
@@ -541,7 +591,7 @@ public class JMTC_Thread extends Thread {
         if (this.mode < JMTC_Thread.MODE_READ_AUTH_RESULT)
             return;
         
-        this.read_unsized_packet(this.mysqlIn);
+        this.read_sized_packet(this.mysqlIn);
         
         this.get_packet_size();
         this.packetType = this.buffer.get(4);
@@ -584,7 +634,8 @@ public class JMTC_Thread extends Thread {
                 break;
             
             default:
-                System.err.print("Packet is "+this.packetType+" type.\n");
+                System.err.print("Result or Packet is "+this.packetType+" type.\n");
+                this.read_full_result_set(this.mysqlIn);
                 this.dump_buffer();
                 break;
         }
