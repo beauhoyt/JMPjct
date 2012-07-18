@@ -20,7 +20,21 @@ public class JMTC {
             System.exit(-1);
         }
         
-        plugins.add(new Plugin_Debug());
+        String[] ps = System.getProperty("plugins").split(",");
+        for (String p: ps) {
+            try {
+                plugins.add((Proxy_Plugin) Proxy_Plugin.class.getClassLoader().loadClass(p).newInstance());
+            }
+            catch (java.lang.ClassNotFoundException e) {
+                continue;
+            }
+            catch (java.lang.InstantiationException e) {
+                continue;
+            }
+            catch (java.lang.IllegalAccessException e) {
+                continue;
+            }
+        }
         
         while (listening)
             new Proxy(listener.accept(), mysqlHost, mysqlPort, plugins).start();

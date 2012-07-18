@@ -57,6 +57,9 @@ public class Proxy extends Thread {
     // Modes
     public int mode = 0;
     
+    // Allow plugins to muck with the modes
+    public int nextMode = 0;
+    
     public static final int MODE_INIT               = 0; // Connection opened
     public static final int MODE_READ_HANDSHAKE     = 1; // Read the handshake from the server, process it, and forward it
     public static final int MODE_READ_AUTH          = 2; // Read the reply from the client, process it, and forward it
@@ -163,50 +166,50 @@ public class Proxy extends Thread {
             switch (this.mode) {
                 case Proxy.MODE_INIT:
                     System.err.print("MODE_INIT\n");
+                    this.nextMode = Proxy.MODE_READ_HANDSHAKE;
                     this.call_plugins();
-                    this.mode = Proxy.MODE_READ_HANDSHAKE;
                     break;
                 
                 case Proxy.MODE_READ_HANDSHAKE:
                     System.err.print("MODE_READ_HANDSHAKE\n");
                     this.read_handshake();
+                    this.nextMode = Proxy.MODE_READ_AUTH;
                     this.call_plugins();
-                    this.mode = Proxy.MODE_READ_AUTH;
                     break;
                 
                 case Proxy.MODE_READ_AUTH:
                     System.err.print("MODE_READ_AUTH\n");
                     this.read_auth();
+                    this.nextMode = Proxy.MODE_READ_AUTH_RESULT;
                     this.call_plugins();
-                    this.mode = Proxy.MODE_READ_AUTH_RESULT;
                     break;
                 
                 case Proxy.MODE_READ_AUTH_RESULT:
                     System.err.print("MODE_READ_AUTH_RESULT\n");
                     this.read_auth_result();
+                    this.nextMode = Proxy.MODE_READ_QUERY;
                     this.call_plugins();
-                    this.mode = Proxy.MODE_READ_QUERY;
                     break;
                 
                 case Proxy.MODE_READ_QUERY:
                     System.err.print("MODE_READ_QUERY\n");
                     this.read_query();
+                    this.nextMode = Proxy.MODE_READ_QUERY_RESULT;
                     this.call_plugins();
-                    this.mode = Proxy.MODE_READ_QUERY_RESULT;
                     break;
                 
                 case Proxy.MODE_READ_QUERY_RESULT:
                     System.err.print("MODE_READ_QUERY_RESULT\n");
                     this.read_query_result();
+                    this.nextMode = Proxy.MODE_SEND_QUERY_RESULT;
                     this.call_plugins();
-                    this.mode = Proxy.MODE_SEND_QUERY_RESULT;
                     break;
                 
                 case Proxy.MODE_SEND_QUERY_RESULT:
                     System.err.print("MODE_SEND_QUERY_RESULT\n");
                     this.send_query_result();
+                    this.nextMode = Proxy.MODE_READ_QUERY;
                     this.call_plugins();
-                    this.mode = Proxy.MODE_READ_QUERY;
                     break;
                 
                 case Proxy.MODE_CLEANUP:
@@ -220,6 +223,7 @@ public class Proxy extends Thread {
                     this.running = 0;
                     break;
             }
+            this.mode = this.nextMode;
             
         }
         System.err.print("Exiting thread.\n");
@@ -267,7 +271,6 @@ public class Proxy extends Thread {
                     break;
             }
         }
-        
     }
     
     public void clear_buffer() {
@@ -392,27 +395,7 @@ public class Proxy extends Thread {
         }
         catch (IOException e) {
             this.running = 0;
-        }
-    }
-    
-    public void dump_buffer() {
-        int size = this.buffer.size();
-        Integer b = 0;
-        int i = 0;
-        byte[] buff = new byte[size];
-        
-        for (i = 0; i < size; i++) {
-            b = this.buffer.get(i);
-            buff[i] = (byte) (b & 0xFF);
-        }
-        
-        if (size > 0) {
-            try {
-                HexDump.dump(buff, 0, java.lang.System.err, 0);
-            }
-            catch (IOException e) {
-                return;
-            }
+            System.err.print("IOException.\n");
         }
     }
     
@@ -441,14 +424,6 @@ public class Proxy extends Thread {
         
         this.serverCharacterSet = this.get_fixed_int(1);
 
-        System.err.print("<- AuthChallengePacket\n");
-        System.err.print("   Server Version: "+this.serverVersion+"\n");
-        System.err.print("   Connection Id: "+this.connectionId+"\n");
-        
-        System.err.print("   Server Capability Flags: ");
-        this.dump_capability_flags(1);
-        System.err.print("\n\n");
-        
         this.write(this.clientOut);
     }
     
@@ -518,90 +493,7 @@ public class Proxy extends Thread {
             this.user = this.get_nul_string();
         }
         
-        System.err.print("-> AuthResponsePacket\n");
-        System.err.print("   Max Packet Size: "+this.clientMaxPacketSize+"\n");
-        System.err.print("   User: "+this.user+"\n");
-        System.err.print("   Schema: "+this.schema+"\n");
-        
-        System.err.print("   Client Capability Flags: ");
-        this.dump_capability_flags(0);
-        System.err.print("\n\n");
-        
         this.write(this.mysqlOut);
-    }
-    
-    public void dump_capability_flags(Integer server) {
-        Integer capabilityFlags = 0;
-        if (server == 0)
-            capabilityFlags = this.clientCapabilityFlags;
-        else
-            capabilityFlags = this.serverCapabilityFlags;
-            
-        if (capabilityFlags > 0) {
-            if ((capabilityFlags & Proxy.CLIENT_LONG_PASSWORD) != 0)
-                System.err.print(" CLIENT_LONG_PASSWORD");
-            if ((capabilityFlags & Proxy.CLIENT_FOUND_ROWS) != 0)
-                System.err.print(" CLIENT_FOUND_ROWS");
-            if ((capabilityFlags & Proxy.CLIENT_LONG_FLAG) != 0)
-                System.err.print(" CLIENT_LONG_FLAG");
-            if ((capabilityFlags & Proxy.CLIENT_CONNECT_WITH_DB) != 0)
-                System.err.print(" CLIENT_CONNECT_WITH_DB");
-            if ((capabilityFlags & Proxy.CLIENT_NO_SCHEMA) != 0)
-                System.err.print(" CLIENT_NO_SCHEMA");
-            if ((capabilityFlags & Proxy.CLIENT_COMPRESS) != 0)
-                System.err.print(" CLIENT_COMPRESS");
-            if ((capabilityFlags & Proxy.CLIENT_ODBC) != 0)
-                System.err.print(" CLIENT_ODBC");
-            if ((capabilityFlags & Proxy.CLIENT_LOCAL_FILES) != 0)
-                System.err.print(" CLIENT_LOCAL_FILES");
-            if ((capabilityFlags & Proxy.CLIENT_IGNORE_SPACE) != 0)
-                System.err.print(" CLIENT_IGNORE_SPACE");
-            if ((capabilityFlags & Proxy.CLIENT_PROTOCOL_41) != 0)
-                System.err.print(" CLIENT_PROTOCOL_41");
-            if ((capabilityFlags & Proxy.CLIENT_INTERACTIVE) != 0)
-                System.err.print(" CLIENT_INTERACTIVE");
-            if ((capabilityFlags & Proxy.CLIENT_SSL) != 0)
-                System.err.print(" CLIENT_SSL");
-            if ((capabilityFlags & Proxy.CLIENT_IGNORE_SIGPIPE) != 0)
-                System.err.print(" CLIENT_IGNORE_SIGPIPE");
-            if ((capabilityFlags & Proxy.CLIENT_TRANSACTIONS) != 0)
-                System.err.print(" CLIENT_TRANSACTIONS");
-            if ((capabilityFlags & Proxy.CLIENT_RESERVED) != 0)
-                System.err.print(" CLIENT_RESERVED");
-            if ((capabilityFlags & Proxy.CLIENT_SECURE_CONNECTION) != 0)
-                System.err.print(" CLIENT_SECURE_CONNECTION");
-        }
-    }
-    
-    public void dump_status_flags() {
-        if (this.statusFlags > 0) {
-            if ((this.statusFlags & Proxy.SERVER_STATUS_IN_TRANS) != 0)
-                System.err.print(" SERVER_STATUS_IN_TRANS");
-            if ((this.statusFlags & Proxy.SERVER_STATUS_AUTOCOMMIT) != 0)
-                System.err.print(" SERVER_STATUS_AUTOCOMMIT");
-            if ((this.statusFlags & Proxy.SERVER_MORE_RESULTS_EXISTS) != 0)
-                System.err.print(" SERVER_MORE_RESULTS_EXISTS");
-            if ((this.statusFlags & Proxy.SERVER_STATUS_NO_GOOD_INDEX_USED) != 0)
-                System.err.print(" SERVER_STATUS_NO_GOOD_INDEX_USED");
-            if ((this.statusFlags & Proxy.SERVER_STATUS_NO_INDEX_USED) != 0)
-                System.err.print(" SERVER_STATUS_NO_INDEX_USED");
-            if ((this.statusFlags & Proxy.SERVER_STATUS_CURSOR_EXISTS) != 0)
-                System.err.print(" SERVER_STATUS_CURSOR_EXISTS");
-            if ((this.statusFlags & Proxy.SERVER_STATUS_LAST_ROW_SENT) != 0)
-                System.err.print(" SERVER_STATUS_LAST_ROW_SENT");
-            if ((this.statusFlags & Proxy.SERVER_STATUS_LAST_ROW_SENT) != 0)
-                System.err.print(" SERVER_STATUS_LAST_ROW_SENT");
-            if ((this.statusFlags & Proxy.SERVER_STATUS_DB_DROPPED) != 0)
-                System.err.print(" SERVER_STATUS_DB_DROPPED");
-            if ((this.statusFlags & Proxy.SERVER_STATUS_NO_BACKSLASH_ESCAPES) != 0)
-                System.err.print(" SERVER_STATUS_NO_BACKSLASH_ESCAPES");
-            if ((this.statusFlags & Proxy.SERVER_STATUS_METADATA_CHANGED) != 0)
-                System.err.print(" SERVER_STATUS_METADATA_CHANGED");
-            if ((this.statusFlags & Proxy.SERVER_QUERY_WAS_SLOW) != 0)
-                System.err.print(" SERVER_QUERY_WAS_SLOW");
-            if ((this.statusFlags & Proxy.SERVER_PS_OUT_PARAMS) != 0)
-                System.err.print(" SERVER_PS_OUT_PARAMS");
-        }
     }
     
     public void read_query() {
@@ -616,27 +508,21 @@ public class Proxy extends Thread {
         
         switch (this.packetType) {
             case Proxy.COM_QUIT:
-                System.err.print("-> COM_QUIT\n");
-                this.dump_buffer();
                 this.running = 0;
                 break;
             
             // Extract out the new default schema
             case Proxy.COM_INIT_DB:
                 this.schema = this.get_eop_string();
-                System.err.print("-> USE "+this.schema+"\n");
                 break;
             
             // Query
             case Proxy.COM_QUERY:
                 this.offset ++;
                 this.query = this.get_eop_string();
-                System.err.print("-> "+this.query+"\n");
                 break;
             
             default:
-                System.err.print("Packet is "+this.packetType+" type.\n");
-                this.dump_buffer();
                 break;
         }
         
@@ -663,19 +549,6 @@ public class Proxy extends Thread {
                     this.statusFlags  = this.get_fixed_int(2);
                     this.warnings     = this.get_fixed_int(2);
                 }
-                
-                System.err.print("<- OK\n");
-                if (this.affectedRows > 0)
-                    System.err.print("   Affected rows: "+this.affectedRows+"\n");
-                if (this.lastInsertId > 0)
-                    System.err.print("   Inserted id: "+this.lastInsertId+"\n");
-                if (this.warnings > 0)
-                    System.err.print("   Warnings: "+this.warnings+"\n");
-
-                System.err.print("   Status Flags: ");
-                this.dump_status_flags();
-                System.err.print("\n");
-                
                 break;
             
             case Proxy.ERR:
@@ -684,16 +557,10 @@ public class Proxy extends Thread {
                     this.errorCode    = this.get_fixed_int(2);
                     this.offset++;
                 }
-                
-                System.err.print("<- ERR\n");
-                
                 break;
             
             default:
-                System.err.print("Result or Packet is "+this.packetType+" type.\n");
-                this.dump_buffer();
                 this.read_full_result_set(this.mysqlIn);
-                this.dump_buffer();
                 break;
         }
     }
@@ -774,8 +641,6 @@ public class Proxy extends Thread {
         }
         
         System.err.print("Decoding int at offset "+this.offset+" failed!");
-        this.dump_buffer();
-        
         return -1;
     }
 
@@ -885,8 +750,6 @@ public class Proxy extends Thread {
         }
         
         System.err.print("Decoding int "+size+" at offset "+this.offset+" failed!\n");
-        this.dump_buffer();
-        
         return -1;
     }
     

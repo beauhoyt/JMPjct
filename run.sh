@@ -12,4 +12,4 @@ set CLASSPATH="${CLASSPATH}"
 export CLASSPATH="${CLASSPATH}"
 
 javac -classpath "${CLASSPATH}" *.java
-java -classpath "${CLASSPATH}" -DmysqlHost=127.0.0.1 -DmysqlPort=3306 -Dport=5050 JMTC
+java -classpath "${CLASSPATH}" -DmysqlHost=127.0.0.1 -DmysqlPort=3306 -Dport=5050 -Dplugins=Plugin_Debug JMTC
