@@ -3,7 +3,7 @@ import java.io.*;
 import java.util.*;
 import org.apache.commons.io.*;
 
-public class JMTC_Thread extends Thread {
+public class Proxy extends Thread {
     
     // Where to connect to
     public String mysqlHost = null;
@@ -18,6 +18,9 @@ public class JMTC_Thread extends Thread {
     public Socket clientSocket = null;
     public InputStream clientIn = null;
     public OutputStream clientOut = null;
+    
+    // Plugins
+    public ArrayList<Class<? extends Proxy_Plugin>> plugins = new ArrayList<Class<? extends Proxy_Plugin>>();
     
     // Packet Buffer. ArrayList so we can grow/shrink dynamically
     public ArrayList<Integer> buffer = new ArrayList<Integer>();
@@ -131,10 +134,11 @@ public class JMTC_Thread extends Thread {
     public static final int CLIENT_REMEMBER_OPTIONS            = 0x80000000;
     
     
-    public JMTC_Thread(Socket clientSocket, String mysqlHost, int mysqlPort) {
+    public Proxy(Socket clientSocket, String mysqlHost, int mysqlPort, ArrayList<Class<? extends Proxy_Plugin>> plugins) {
         this.clientSocket = clientSocket;
         this.mysqlHost = mysqlHost;
         this.mysqlPort = mysqlPort;
+        this.plugins = plugins;
         
         try {
             this.clientIn = this.clientSocket.getInputStream();
@@ -152,53 +156,59 @@ public class JMTC_Thread extends Thread {
     }
 
     public void run() {
-        this.mode = JMTC_Thread.MODE_READ_HANDSHAKE;
+        this.mode = Proxy.MODE_INIT;
 
         while (this.running == 1) {
             
             switch (this.mode) {
-                case JMTC_Thread.MODE_READ_HANDSHAKE:
+                case Proxy.MODE_INIT:
+                    System.err.print("MODE_INIT\n");
+                    this.mode = Proxy.MODE_READ_HANDSHAKE;
+                    break;
+                
+                case Proxy.MODE_READ_HANDSHAKE:
                     System.err.print("MODE_READ_HANDSHAKE\n");
                     this.read_handshake();
-                    this.mode = JMTC_Thread.MODE_READ_AUTH;
+                    this.mode = Proxy.MODE_READ_AUTH;
                     break;
                 
-                case JMTC_Thread.MODE_READ_AUTH:
+                case Proxy.MODE_READ_AUTH:
                     System.err.print("MODE_READ_AUTH\n");
                     this.read_auth();
-                    this.mode = JMTC_Thread.MODE_READ_AUTH_RESULT;
+                    this.mode = Proxy.MODE_READ_AUTH_RESULT;
                     break;
                 
-                case JMTC_Thread.MODE_READ_AUTH_RESULT:
+                case Proxy.MODE_READ_AUTH_RESULT:
                     System.err.print("MODE_READ_AUTH_RESULT\n");
                     this.read_auth_result();
-                    this.mode = JMTC_Thread.MODE_READ_QUERY;
+                    this.mode = Proxy.MODE_READ_QUERY;
                     break;
                 
-                case JMTC_Thread.MODE_READ_QUERY:
+                case Proxy.MODE_READ_QUERY:
                     System.err.print("MODE_READ_QUERY\n");
                     this.read_query();
-                    this.mode = JMTC_Thread.MODE_READ_QUERY_RESULT;
+                    this.mode = Proxy.MODE_READ_QUERY_RESULT;
                     break;
                 
-                case JMTC_Thread.MODE_READ_QUERY_RESULT:
+                case Proxy.MODE_READ_QUERY_RESULT:
                     System.err.print("MODE_READ_QUERY_RESULT\n");
                     this.read_query_result();
-                    this.mode = JMTC_Thread.MODE_SEND_QUERY_RESULT;
+                    this.mode = Proxy.MODE_SEND_QUERY_RESULT;
                     break;
                 
-                case JMTC_Thread.MODE_SEND_QUERY_RESULT:
+                case Proxy.MODE_SEND_QUERY_RESULT:
                     System.err.print("MODE_SEND_QUERY_RESULT\n");
                     this.send_query_result();
-                    this.mode = JMTC_Thread.MODE_READ_QUERY;
+                    this.mode = Proxy.MODE_READ_QUERY;
                     break;
                 
-                case JMTC_Thread.MODE_CLEANUP:
+                case Proxy.MODE_CLEANUP:
                     System.err.print("MODE_CLEANUP\n");
                     this.running = 0;
                     break;
                 
                 default:
+                    System.err.print("UNKNOWN MODE "+this.mode+"\n");
                     this.running = 0;
                     break;
             }
@@ -236,7 +246,7 @@ public class JMTC_Thread extends Thread {
         // Do we have more results?
         this.offset=7;
         Integer statusFlags = this.get_fixed_int(2);
-        if ((statusFlags & JMTC_Thread.SERVER_MORE_RESULTS_EXISTS) != 0) {
+        if ((statusFlags & Proxy.SERVER_MORE_RESULTS_EXISTS) != 0) {
             this.clear_buffer();
             this.read_sized_packet(this.mysqlIn);
             this.read_full_result_set(this.mysqlIn);
@@ -367,11 +377,11 @@ public class JMTC_Thread extends Thread {
         
         // Remove Compression and SSL support so we can sniff traffic easily
         this.offset -= 2;
-        if ((this.serverCapabilityFlags & JMTC_Thread.CLIENT_COMPRESS) != 0)
-            this.serverCapabilityFlags ^= JMTC_Thread.CLIENT_COMPRESS;
+        if ((this.serverCapabilityFlags & Proxy.CLIENT_COMPRESS) != 0)
+            this.serverCapabilityFlags ^= Proxy.CLIENT_COMPRESS;
         
-        if ((this.serverCapabilityFlags & JMTC_Thread.CLIENT_SSL) != 0)
-            this.serverCapabilityFlags ^= JMTC_Thread.CLIENT_SSL;
+        if ((this.serverCapabilityFlags & Proxy.CLIENT_SSL) != 0)
+            this.serverCapabilityFlags ^= Proxy.CLIENT_SSL;
         
         this.offset -= 2;
         this.set_fixed_int(2, this.serverCapabilityFlags);
@@ -391,7 +401,7 @@ public class JMTC_Thread extends Thread {
     
     public void read_auth_result() {
         this.read_unsized_packet(this.mysqlIn);
-        if (this.packetType != JMTC_Thread.OK)
+        if (this.packetType != Proxy.OK)
             this.running = 0;
         this.write(this.clientOut);
     }
@@ -402,25 +412,25 @@ public class JMTC_Thread extends Thread {
         this.offset = 5;
         this.clientCapabilityFlags = this.get_fixed_int(2);
         
-        if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_PROTOCOL_41) != 0) {
+        if ((this.clientCapabilityFlags & Proxy.CLIENT_PROTOCOL_41) != 0) {
             this.offset = 5;
             this.clientCapabilityFlags = this.get_fixed_int(4);
             this.offset -= 4;
             // Remove Compression and SSL support so we can sniff traffic easily
-            if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_COMPRESS) != 0)
-                this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_COMPRESS;
+            if ((this.clientCapabilityFlags & Proxy.CLIENT_COMPRESS) != 0)
+                this.clientCapabilityFlags ^= Proxy.CLIENT_COMPRESS;
             
-            if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_SSL) != 0)
-                this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_SSL;
+            if ((this.clientCapabilityFlags & Proxy.CLIENT_SSL) != 0)
+                this.clientCapabilityFlags ^= Proxy.CLIENT_SSL;
                 
-            if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_MULTI_STATEMENTS) != 0)
-                this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_MULTI_STATEMENTS;
+            if ((this.clientCapabilityFlags & Proxy.CLIENT_MULTI_STATEMENTS) != 0)
+                this.clientCapabilityFlags ^= Proxy.CLIENT_MULTI_STATEMENTS;
                 
-            if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_MULTI_RESULTS) != 0)
-                this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_MULTI_RESULTS;
+            if ((this.clientCapabilityFlags & Proxy.CLIENT_MULTI_RESULTS) != 0)
+                this.clientCapabilityFlags ^= Proxy.CLIENT_MULTI_RESULTS;
                 
-            if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_PS_MULTI_RESULTS) != 0)
-                this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_PS_MULTI_RESULTS;
+            if ((this.clientCapabilityFlags & Proxy.CLIENT_PS_MULTI_RESULTS) != 0)
+                this.clientCapabilityFlags ^= Proxy.CLIENT_PS_MULTI_RESULTS;
             
             this.set_fixed_int(4, this.clientCapabilityFlags);
         
@@ -430,7 +440,7 @@ public class JMTC_Thread extends Thread {
             this.user = this.get_nul_string();
             
             // auth-response
-            if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_SECURE_CONNECTION) != 0)
+            if ((this.clientCapabilityFlags & Proxy.CLIENT_SECURE_CONNECTION) != 0)
                 this.get_lenenc_string();
             else
                 this.get_nul_string();
@@ -443,11 +453,11 @@ public class JMTC_Thread extends Thread {
             
             this.offset -= 2;
             // Remove Compression and SSL support so we can sniff traffic easily
-            if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_COMPRESS) != 0)
-                this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_COMPRESS;
+            if ((this.clientCapabilityFlags & Proxy.CLIENT_COMPRESS) != 0)
+                this.clientCapabilityFlags ^= Proxy.CLIENT_COMPRESS;
             
-            if ((this.clientCapabilityFlags & JMTC_Thread.CLIENT_SSL) != 0)
-                this.clientCapabilityFlags ^= JMTC_Thread.CLIENT_SSL;
+            if ((this.clientCapabilityFlags & Proxy.CLIENT_SSL) != 0)
+                this.clientCapabilityFlags ^= Proxy.CLIENT_SSL;
             
             this.set_fixed_int(2, this.clientCapabilityFlags);
             
@@ -475,74 +485,74 @@ public class JMTC_Thread extends Thread {
             capabilityFlags = this.serverCapabilityFlags;
             
         if (capabilityFlags > 0) {
-            if ((capabilityFlags & JMTC_Thread.CLIENT_LONG_PASSWORD) != 0)
+            if ((capabilityFlags & Proxy.CLIENT_LONG_PASSWORD) != 0)
                 System.err.print(" CLIENT_LONG_PASSWORD");
-            if ((capabilityFlags & JMTC_Thread.CLIENT_FOUND_ROWS) != 0)
+            if ((capabilityFlags & Proxy.CLIENT_FOUND_ROWS) != 0)
                 System.err.print(" CLIENT_FOUND_ROWS");
-            if ((capabilityFlags & JMTC_Thread.CLIENT_LONG_FLAG) != 0)
+            if ((capabilityFlags & Proxy.CLIENT_LONG_FLAG) != 0)
                 System.err.print(" CLIENT_LONG_FLAG");
-            if ((capabilityFlags & JMTC_Thread.CLIENT_CONNECT_WITH_DB) != 0)
+            if ((capabilityFlags & Proxy.CLIENT_CONNECT_WITH_DB) != 0)
                 System.err.print(" CLIENT_CONNECT_WITH_DB");
-            if ((capabilityFlags & JMTC_Thread.CLIENT_NO_SCHEMA) != 0)
+            if ((capabilityFlags & Proxy.CLIENT_NO_SCHEMA) != 0)
                 System.err.print(" CLIENT_NO_SCHEMA");
-            if ((capabilityFlags & JMTC_Thread.CLIENT_COMPRESS) != 0)
+            if ((capabilityFlags & Proxy.CLIENT_COMPRESS) != 0)
                 System.err.print(" CLIENT_COMPRESS");
-            if ((capabilityFlags & JMTC_Thread.CLIENT_ODBC) != 0)
+            if ((capabilityFlags & Proxy.CLIENT_ODBC) != 0)
                 System.err.print(" CLIENT_ODBC");
-            if ((capabilityFlags & JMTC_Thread.CLIENT_LOCAL_FILES) != 0)
+            if ((capabilityFlags & Proxy.CLIENT_LOCAL_FILES) != 0)
                 System.err.print(" CLIENT_LOCAL_FILES");
-            if ((capabilityFlags & JMTC_Thread.CLIENT_IGNORE_SPACE) != 0)
+            if ((capabilityFlags & Proxy.CLIENT_IGNORE_SPACE) != 0)
                 System.err.print(" CLIENT_IGNORE_SPACE");
-            if ((capabilityFlags & JMTC_Thread.CLIENT_PROTOCOL_41) != 0)
+            if ((capabilityFlags & Proxy.CLIENT_PROTOCOL_41) != 0)
                 System.err.print(" CLIENT_PROTOCOL_41");
-            if ((capabilityFlags & JMTC_Thread.CLIENT_INTERACTIVE) != 0)
+            if ((capabilityFlags & Proxy.CLIENT_INTERACTIVE) != 0)
                 System.err.print(" CLIENT_INTERACTIVE");
-            if ((capabilityFlags & JMTC_Thread.CLIENT_SSL) != 0)
+            if ((capabilityFlags & Proxy.CLIENT_SSL) != 0)
                 System.err.print(" CLIENT_SSL");
-            if ((capabilityFlags & JMTC_Thread.CLIENT_IGNORE_SIGPIPE) != 0)
+            if ((capabilityFlags & Proxy.CLIENT_IGNORE_SIGPIPE) != 0)
                 System.err.print(" CLIENT_IGNORE_SIGPIPE");
-            if ((capabilityFlags & JMTC_Thread.CLIENT_TRANSACTIONS) != 0)
+            if ((capabilityFlags & Proxy.CLIENT_TRANSACTIONS) != 0)
                 System.err.print(" CLIENT_TRANSACTIONS");
-            if ((capabilityFlags & JMTC_Thread.CLIENT_RESERVED) != 0)
+            if ((capabilityFlags & Proxy.CLIENT_RESERVED) != 0)
                 System.err.print(" CLIENT_RESERVED");
-            if ((capabilityFlags & JMTC_Thread.CLIENT_SECURE_CONNECTION) != 0)
+            if ((capabilityFlags & Proxy.CLIENT_SECURE_CONNECTION) != 0)
                 System.err.print(" CLIENT_SECURE_CONNECTION");
         }
     }
     
     public void dump_status_flags() {
         if (this.statusFlags > 0) {
-            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_IN_TRANS) != 0)
+            if ((this.statusFlags & Proxy.SERVER_STATUS_IN_TRANS) != 0)
                 System.err.print(" SERVER_STATUS_IN_TRANS");
-            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_AUTOCOMMIT) != 0)
+            if ((this.statusFlags & Proxy.SERVER_STATUS_AUTOCOMMIT) != 0)
                 System.err.print(" SERVER_STATUS_AUTOCOMMIT");
-            if ((this.statusFlags & JMTC_Thread.SERVER_MORE_RESULTS_EXISTS) != 0)
+            if ((this.statusFlags & Proxy.SERVER_MORE_RESULTS_EXISTS) != 0)
                 System.err.print(" SERVER_MORE_RESULTS_EXISTS");
-            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_NO_GOOD_INDEX_USED) != 0)
+            if ((this.statusFlags & Proxy.SERVER_STATUS_NO_GOOD_INDEX_USED) != 0)
                 System.err.print(" SERVER_STATUS_NO_GOOD_INDEX_USED");
-            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_NO_INDEX_USED) != 0)
+            if ((this.statusFlags & Proxy.SERVER_STATUS_NO_INDEX_USED) != 0)
                 System.err.print(" SERVER_STATUS_NO_INDEX_USED");
-            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_CURSOR_EXISTS) != 0)
+            if ((this.statusFlags & Proxy.SERVER_STATUS_CURSOR_EXISTS) != 0)
                 System.err.print(" SERVER_STATUS_CURSOR_EXISTS");
-            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_LAST_ROW_SENT) != 0)
+            if ((this.statusFlags & Proxy.SERVER_STATUS_LAST_ROW_SENT) != 0)
                 System.err.print(" SERVER_STATUS_LAST_ROW_SENT");
-            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_LAST_ROW_SENT) != 0)
+            if ((this.statusFlags & Proxy.SERVER_STATUS_LAST_ROW_SENT) != 0)
                 System.err.print(" SERVER_STATUS_LAST_ROW_SENT");
-            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_DB_DROPPED) != 0)
+            if ((this.statusFlags & Proxy.SERVER_STATUS_DB_DROPPED) != 0)
                 System.err.print(" SERVER_STATUS_DB_DROPPED");
-            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_NO_BACKSLASH_ESCAPES) != 0)
+            if ((this.statusFlags & Proxy.SERVER_STATUS_NO_BACKSLASH_ESCAPES) != 0)
                 System.err.print(" SERVER_STATUS_NO_BACKSLASH_ESCAPES");
-            if ((this.statusFlags & JMTC_Thread.SERVER_STATUS_METADATA_CHANGED) != 0)
+            if ((this.statusFlags & Proxy.SERVER_STATUS_METADATA_CHANGED) != 0)
                 System.err.print(" SERVER_STATUS_METADATA_CHANGED");
-            if ((this.statusFlags & JMTC_Thread.SERVER_QUERY_WAS_SLOW) != 0)
+            if ((this.statusFlags & Proxy.SERVER_QUERY_WAS_SLOW) != 0)
                 System.err.print(" SERVER_QUERY_WAS_SLOW");
-            if ((this.statusFlags & JMTC_Thread.SERVER_PS_OUT_PARAMS) != 0)
+            if ((this.statusFlags & Proxy.SERVER_PS_OUT_PARAMS) != 0)
                 System.err.print(" SERVER_PS_OUT_PARAMS");
         }
     }
     
     public void read_query() {
-        if (this.mode < JMTC_Thread.MODE_READ_AUTH_RESULT)
+        if (this.mode < Proxy.MODE_READ_AUTH_RESULT)
             return;
         
         this.read_unsized_packet(this.clientIn);
@@ -552,20 +562,20 @@ public class JMTC_Thread extends Thread {
         this.sequenceId = this.buffer.get(3);
         
         switch (this.packetType) {
-            case JMTC_Thread.COM_QUIT:
+            case Proxy.COM_QUIT:
                 System.err.print("-> COM_QUIT\n");
                 this.dump_buffer();
                 this.running = 0;
                 break;
             
             // Extract out the new default schema
-            case JMTC_Thread.COM_INIT_DB:
+            case Proxy.COM_INIT_DB:
                 this.schema = this.get_eop_string();
                 System.err.print("-> USE "+this.schema+"\n");
                 break;
             
             // Query
-            case JMTC_Thread.COM_QUERY:
+            case Proxy.COM_QUERY:
                 this.offset ++;
                 this.query = this.get_eop_string();
                 System.err.print("-> "+this.query+"\n");
@@ -581,7 +591,7 @@ public class JMTC_Thread extends Thread {
     }
     
     public void read_query_result() {
-        if (this.mode < JMTC_Thread.MODE_READ_AUTH_RESULT)
+        if (this.mode < Proxy.MODE_READ_AUTH_RESULT)
             return;
         
         this.read_sized_packet(this.mysqlIn);
@@ -591,9 +601,9 @@ public class JMTC_Thread extends Thread {
         this.sequenceId = this.buffer.get(3);
         
         switch (this.packetType) {
-            case JMTC_Thread.OK:
+            case Proxy.OK:
                 
-                if (this.mode >= JMTC_Thread.MODE_READ_AUTH_RESULT) {
+                if (this.mode >= Proxy.MODE_READ_AUTH_RESULT) {
                     this.offset = 5;
                     this.affectedRows = this.get_lenenc_int();
                     this.lastInsertId = this.get_lenenc_int();
@@ -615,8 +625,8 @@ public class JMTC_Thread extends Thread {
                 
                 break;
             
-            case JMTC_Thread.ERR:
-                if (this.mode >= JMTC_Thread.MODE_READ_AUTH_RESULT) {
+            case Proxy.ERR:
+                if (this.mode >= Proxy.MODE_READ_AUTH_RESULT) {
                     this.offset = 5;
                     this.errorCode    = this.get_fixed_int(2);
                     this.offset++;
@@ -832,7 +842,7 @@ public class JMTC_Thread extends Thread {
         int i = 0;
         
         for (i = this.offset; i < this.offset+len; i++)
-            str += JMTC_Thread.int2char(this.buffer.get(i));
+            str += Proxy.int2char(this.buffer.get(i));
             
         this.offset += i;
         
@@ -844,7 +854,7 @@ public class JMTC_Thread extends Thread {
         int i = 0;
         
         for (i = this.offset; i < this.buffer.size(); i++)
-            str += JMTC_Thread.int2char(this.buffer.get(i));
+            str += Proxy.int2char(this.buffer.get(i));
         this.offset += i;
         
         return str;
@@ -861,7 +871,7 @@ public class JMTC_Thread extends Thread {
                 this.offset += 1;
                 break;
             }
-            str += JMTC_Thread.int2char(b);
+            str += Proxy.int2char(b);
             this.offset += 1;
         }
         
@@ -877,7 +887,7 @@ public class JMTC_Thread extends Thread {
             b = this.buffer.get(i).intValue();
             if (b == 0x00)
                 break;
-            str += JMTC_Thread.int2char(b);
+            str += Proxy.int2char(b);
         }
         this.offset += i;
         

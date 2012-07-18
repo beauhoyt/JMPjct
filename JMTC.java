@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.util.*;
 import java.net.ServerSocket;
 
 public class JMTC {
@@ -9,6 +10,7 @@ public class JMTC {
         int port = Integer.parseInt(System.getProperty("port"));
         boolean listening = true;
         ServerSocket listener = null;
+        ArrayList<Class<? extends Proxy_Plugin>> plugins = new ArrayList<Class<? extends Proxy_Plugin>>();
         
         try {
             listener = new ServerSocket(port);
@@ -19,7 +21,7 @@ public class JMTC {
         }
         
         while (listening)
-            new JMTC_Thread(listener.accept(), mysqlHost, mysqlPort).start();
+            new Proxy(listener.accept(), mysqlHost, mysqlPort, plugins).start();
  
         listener.close();
     }
