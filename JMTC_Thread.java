@@ -6,53 +6,53 @@ import org.apache.commons.io.*;
 public class JMTC_Thread extends Thread {
     
     // Where to connect to
-    private String mysqlHost = null;
-    private int mysqlPort;
+    public String mysqlHost = null;
+    public int mysqlPort;
     
     // MySql server stuff
-    private Socket mysqlSocket = null;
-    private InputStream mysqlIn = null;
-    private OutputStream mysqlOut = null;
+    public Socket mysqlSocket = null;
+    public InputStream mysqlIn = null;
+    public OutputStream mysqlOut = null;
     
     // Client stuff
-    private Socket clientSocket = null;
-    private InputStream clientIn = null;
-    private OutputStream clientOut = null;
+    public Socket clientSocket = null;
+    public InputStream clientIn = null;
+    public OutputStream clientOut = null;
     
     // Packet Buffer. ArrayList so we can grow/shrink dynamically
-    private ArrayList<Integer> buffer = new ArrayList<Integer>();
-    private int offset = 0;
+    public ArrayList<Integer> buffer = new ArrayList<Integer>();
+    public int offset = 0;
     
     // Stop the thread?
-    private int running = 1;
+    public int running = 1;
 
     // Connection info
-    private Integer packetType = 0;
-    private String schema = "";
-    private Integer sequenceId = 0;
-    private String query = "";
-    private Integer affectedRows = 0;
-    private Integer lastInsertId = 0;
-    private Integer statusFlags = 0;
-    private Integer warnings = 0;
-    private Integer errorCode = 0;
-    private String sqlState = "";
-    private String errorMessage = "";
-    private Integer protocolVersion = 0;
-    private String serverVersion = "";
-    private Integer connectionId = 0;
-    private Integer capabilityFlags = 0;
-    private Integer characterSet = 0;
-    private Integer serverCapabilityFlagsOffset = 0;
-    private Integer serverCapabilityFlags = 0;
-    private Integer serverCharacterSet = 0;
-    private Integer clientCapabilityFlags = 0;
-    private Integer clientCharacterSet = 0;
-    private String user = "";
-    private Integer clientMaxPacketSize = 0;
+    public Integer packetType = 0;
+    public String schema = "";
+    public Integer sequenceId = 0;
+    public String query = "";
+    public Integer affectedRows = 0;
+    public Integer lastInsertId = 0;
+    public Integer statusFlags = 0;
+    public Integer warnings = 0;
+    public Integer errorCode = 0;
+    public String sqlState = "";
+    public String errorMessage = "";
+    public Integer protocolVersion = 0;
+    public String serverVersion = "";
+    public Integer connectionId = 0;
+    public Integer capabilityFlags = 0;
+    public Integer characterSet = 0;
+    public Integer serverCapabilityFlagsOffset = 0;
+    public Integer serverCapabilityFlags = 0;
+    public Integer serverCharacterSet = 0;
+    public Integer clientCapabilityFlags = 0;
+    public Integer clientCharacterSet = 0;
+    public String user = "";
+    public Integer clientMaxPacketSize = 0;
     
     // Modes
-    private int mode = 0;
+    public int mode = 0;
     
     public static final int MODE_INIT               = 0; // Connection opened
     public static final int MODE_READ_HANDSHAKE     = 1; // Read the handshake from the server, process it, and forward it
@@ -144,7 +144,7 @@ public class JMTC_Thread extends Thread {
             this.mysqlSocket = new Socket(this.mysqlHost, this.mysqlPort);
             this.mysqlIn = this.mysqlSocket.getInputStream();
             this.mysqlOut = this.mysqlSocket.getOutputStream();
-            System.err.print("Connected to "+this.mysqlHost+":"+this.mysqlPort+".\n\n");
+            System.err.print("Connected to mysql server at "+this.mysqlHost+":"+this.mysqlPort+"\n\n");
         }
         catch (IOException e) {
             return;
