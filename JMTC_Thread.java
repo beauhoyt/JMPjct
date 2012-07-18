@@ -59,10 +59,9 @@ public class JMTC_Thread extends Thread {
     public static final int MODE_READ_AUTH          = 2; // Read the reply from the client, process it, and forward it
     public static final int MODE_READ_AUTH_RESULT   = 3; // Read the reply from the server, process it and forward it
     public static final int MODE_READ_QUERY         = 4; // Read the query from the client, process it, and forward
-    public static final int MODE_PROXY_QUERY_RESULT = 5; // Just proxy the result set back to the client, no processing
-    public static final int MODE_READ_QUERY_RESULT  = 6; // Read the result set from the server, and process it
-    public static final int MODE_SEND_QUERY_RESULT  = 7; // Send a result set to the client
-    public static final int MODE_CLEANUP            = 8; // Connection closed
+    public static final int MODE_READ_QUERY_RESULT  = 5; // Read the result set from the server, and process it
+    public static final int MODE_SEND_QUERY_RESULT  = 6; // Send a result set to the client
+    public static final int MODE_CLEANUP            = 7; // Connection closed
     
     // Packet types
     public static final int COM_QUIT                = 0x01;
@@ -145,7 +144,7 @@ public class JMTC_Thread extends Thread {
             this.mysqlSocket = new Socket(this.mysqlHost, this.mysqlPort);
             this.mysqlIn = this.mysqlSocket.getInputStream();
             this.mysqlOut = this.mysqlSocket.getOutputStream();
-            System.err.print("Connected to mysql host.\n\n");
+            System.err.print("Connected to "+this.mysqlHost+":"+this.mysqlPort+".\n\n");
         }
         catch (IOException e) {
             return;
@@ -161,36 +160,37 @@ public class JMTC_Thread extends Thread {
                 case JMTC_Thread.MODE_READ_HANDSHAKE:
                     System.err.print("MODE_READ_HANDSHAKE\n");
                     this.read_handshake();
+                    this.mode = JMTC_Thread.MODE_READ_AUTH;
                     break;
                 
                 case JMTC_Thread.MODE_READ_AUTH:
                     System.err.print("MODE_READ_AUTH\n");
                     this.read_auth();
+                    this.mode = JMTC_Thread.MODE_READ_AUTH_RESULT;
                     break;
                 
                 case JMTC_Thread.MODE_READ_AUTH_RESULT:
                     System.err.print("MODE_READ_AUTH_RESULT\n");
                     this.read_auth_result();
+                    this.mode = JMTC_Thread.MODE_READ_QUERY;
                     break;
                 
                 case JMTC_Thread.MODE_READ_QUERY:
                     System.err.print("MODE_READ_QUERY\n");
                     this.read_query();
-                    break;
-                
-                case JMTC_Thread.MODE_PROXY_QUERY_RESULT:
-                    System.err.print("MODE_PROXY_QUERY_RESULT\n");
-                    this.read_query_result();
+                    this.mode = JMTC_Thread.MODE_READ_QUERY_RESULT;
                     break;
                 
                 case JMTC_Thread.MODE_READ_QUERY_RESULT:
                     System.err.print("MODE_READ_QUERY_RESULT\n");
                     this.read_query_result();
+                    this.mode = JMTC_Thread.MODE_SEND_QUERY_RESULT;
                     break;
                 
                 case JMTC_Thread.MODE_SEND_QUERY_RESULT:
                     System.err.print("MODE_SEND_QUERY_RESULT\n");
-                    this.read_query_result();
+                    this.send_query_result();
+                    this.mode = JMTC_Thread.MODE_READ_QUERY;
                     break;
                 
                 case JMTC_Thread.MODE_CLEANUP:
@@ -387,8 +387,6 @@ public class JMTC_Thread extends Thread {
         System.err.print("\n\n");
         
         this.write(this.clientOut);
-        
-        this.mode = JMTC_Thread.MODE_READ_AUTH;
     }
     
     public void read_auth_result() {
@@ -396,8 +394,6 @@ public class JMTC_Thread extends Thread {
         if (this.packetType != JMTC_Thread.OK)
             this.running = 0;
         this.write(this.clientOut);
-        
-        this.mode = JMTC_Thread.MODE_READ_QUERY;
     }
     
     public void read_auth() {
@@ -469,8 +465,6 @@ public class JMTC_Thread extends Thread {
         System.err.print("\n\n");
         
         this.write(this.mysqlOut);
-        this.mode = JMTC_Thread.MODE_READ_AUTH_RESULT;
-        
     }
     
     public void dump_capability_flags(Integer server) {
@@ -584,7 +578,6 @@ public class JMTC_Thread extends Thread {
         }
         
         this.write(this.mysqlOut);
-        this.mode = JMTC_Thread.MODE_READ_QUERY_RESULT;
     }
     
     public void read_query_result() {
@@ -635,14 +628,15 @@ public class JMTC_Thread extends Thread {
             
             default:
                 System.err.print("Result or Packet is "+this.packetType+" type.\n");
+                this.dump_buffer();
                 this.read_full_result_set(this.mysqlIn);
                 this.dump_buffer();
                 break;
         }
-        
+    }
+    
+    public void send_query_result(){
         this.write(this.clientOut);
-        
-        this.mode = JMTC_Thread.MODE_READ_QUERY;
     }
     
     public int get_packet_size() {
