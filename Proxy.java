@@ -158,17 +158,16 @@ public class Proxy extends Thread {
     }
 
     public void run() {
+        System.err.print("MODE_INIT\n");
         this.mode = Proxy.MODE_INIT;
+        this.nextMode = Proxy.MODE_READ_HANDSHAKE;
+        this.running = 1;
+        this.call_plugins();
+        this.mode = this.nextMode;
 
         while (this.running == 1) {
             
             switch (this.mode) {
-                case Proxy.MODE_INIT:
-                    System.err.print("MODE_INIT\n");
-                    this.nextMode = Proxy.MODE_READ_HANDSHAKE;
-                    this.call_plugins();
-                    break;
-                
                 case Proxy.MODE_READ_HANDSHAKE:
                     System.err.print("MODE_READ_HANDSHAKE\n");
                     this.nextMode = Proxy.MODE_READ_AUTH;
@@ -211,26 +210,27 @@ public class Proxy extends Thread {
                     this.call_plugins();
                     break;
                 
-                case Proxy.MODE_CLEANUP:
-                    System.err.print("MODE_CLEANUP\n");
-                    this.call_plugins();
-                    this.running = 0;
-                    break;
-                
                 default:
                     System.err.print("UNKNOWN MODE "+this.mode+"\n");
-                    this.running = 0;
+                    this.halt();
                     break;
             }
             this.mode = this.nextMode;
             
         }
+        
+        this.mode = Proxy.MODE_CLEANUP;
+        this.nextMode = Proxy.MODE_CLEANUP;
+        System.err.print("MODE_CLEANUP\n");
+        this.call_plugins();
+        
         System.err.print("Exiting thread.\n");
     }
     
     public void halt() {
         this.mode = Proxy.MODE_CLEANUP;
         this.nextMode = Proxy.MODE_CLEANUP;
+        this.running = 0;
     }
     
     public void call_plugins() {

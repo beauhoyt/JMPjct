@@ -88,7 +88,6 @@ public class Plugin_Debug implements Proxy_Plugin {
             
             default:
                 System.err.print("Result or Packet is "+context.packetType+" type.\n");
-                this.dump_buffer(context);
                 break;
         }
         return;
