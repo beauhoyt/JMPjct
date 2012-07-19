@@ -30,29 +30,29 @@ public class Proxy extends Thread {
     public int running = 1;
 
     // Connection info
-    public Integer packetType = 0;
+    public int packetType = 0;
     public String schema = "";
-    public Integer sequenceId = 0;
+    public int sequenceId = 0;
     public String query = "";
-    public Integer affectedRows = 0;
-    public Integer lastInsertId = 0;
-    public Integer statusFlags = 0;
-    public Integer warnings = 0;
-    public Integer errorCode = 0;
+    public int affectedRows = 0;
+    public int lastInsertId = 0;
+    public int statusFlags = 0;
+    public int warnings = 0;
+    public int errorCode = 0;
     public String sqlState = "";
     public String errorMessage = "";
-    public Integer protocolVersion = 0;
+    public int protocolVersion = 0;
     public String serverVersion = "";
-    public Integer connectionId = 0;
-    public Integer capabilityFlags = 0;
-    public Integer characterSet = 0;
-    public Integer serverCapabilityFlagsOffset = 0;
-    public Integer serverCapabilityFlags = 0;
-    public Integer serverCharacterSet = 0;
-    public Integer clientCapabilityFlags = 0;
-    public Integer clientCharacterSet = 0;
+    public int connectionId = 0;
+    public int capabilityFlags = 0;
+    public int characterSet = 0;
+    public int serverCapabilityFlagsOffset = 0;
+    public int serverCapabilityFlags = 0;
+    public int serverCharacterSet = 0;
+    public int clientCapabilityFlags = 0;
+    public int clientCharacterSet = 0;
     public String user = "";
-    public Integer clientMaxPacketSize = 0;
+    public int clientMaxPacketSize = 0;
     
     // Modes
     public int mode = 0;
