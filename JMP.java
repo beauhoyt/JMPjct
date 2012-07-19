@@ -16,29 +16,33 @@ public class JMP {
             listener = new ServerSocket(port);
         }
         catch (IOException e) {
-            System.out.println("Could not listen on port");
+            System.err.print("Could not listen on port\n");
             System.exit(-1);
         }
         
         String[] ps = System.getProperty("plugins").split(",");
         
         while (listening) {
-            plugins.clear();
             for (String p: ps) {
                 try {
                     plugins.add((Proxy_Plugin) Proxy_Plugin.class.getClassLoader().loadClass(p).newInstance());
+                    System.err.print("Loaded plugin "+p+"\n");
                 }
                 catch (java.lang.ClassNotFoundException e) {
+                    System.err.print("Failed to load plugin "+p+"\n");
                     continue;
                 }
                 catch (java.lang.InstantiationException e) {
+                    System.err.print("Failed to load plugin "+p+"\n");
                     continue;
                 }
                 catch (java.lang.IllegalAccessException e) {
+                    System.err.print("Failed to load plugin "+p+"\n");
                     continue;
                 }
             }
             new Proxy(listener.accept(), mysqlHost, mysqlPort, plugins).start();
+            plugins.clear();
         }
  
         listener.close();
