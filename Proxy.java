@@ -285,7 +285,7 @@ public class Proxy extends Thread {
     public void read_full_result_set(InputStream in) {
         // Assume we have the start of a result set already
         this.offset = 4;
-        Integer colCount = this.get_lenenc_int();
+        int colCount = this.get_lenenc_int();
         
         // Assume we have a result set
         ArrayList<Integer> resultset = new ArrayList<Integer>();
@@ -305,7 +305,7 @@ public class Proxy extends Thread {
         
         // Do we have more results?
         this.offset=7;
-        Integer statusFlags = this.get_fixed_int(2);
+        int statusFlags = this.get_fixed_int(2);
         if ((statusFlags & Proxy.SERVER_MORE_RESULTS_EXISTS) != 0) {
             this.clear_buffer();
             this.read_sized_packet(this.mysqlIn);
@@ -649,7 +649,7 @@ public class Proxy extends Thread {
         return -1;
     }
 
-    public void set_fixed_int(Integer size, Integer value) {
+    public void set_fixed_int(int size, int value) {
         if (size == 8 && this.buffer.size() >= (this.offset + size)) {
             this.buffer.set(this.offset+0, ((value >>  0) & 0xFF) );
             this.buffer.set(this.offset+1, ((value >>  8) & 0xFF) );
@@ -700,8 +700,8 @@ public class Proxy extends Thread {
         return;
     }
     
-    public Integer get_fixed_int(int size) {
-        Integer value = -1;
+    public int get_fixed_int(int size) {
+        int value = -1;
         
         // 1 byte int
         if (size == 1 && this.buffer.size() >= (size + this.offset) ) {
