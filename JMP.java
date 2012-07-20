@@ -27,7 +27,7 @@ public class JMP {
             listener = new ServerSocket(port);
         }
         catch (IOException e) {
-            logger.fatal("Could not listen on port\n");
+            logger.fatal("Could not listen on port "+port);
             System.exit(-1);
         }
         
@@ -37,18 +37,18 @@ public class JMP {
             for (String p: ps) {
                 try {
                     plugins.add((Proxy_Plugin) Proxy_Plugin.class.getClassLoader().loadClass(p).newInstance());
-                    logger.info("Loaded plugin "+p+"\n");
+                    logger.info("Loaded plugin "+p);
                 }
                 catch (java.lang.ClassNotFoundException e) {
-                    logger.error("Failed to load plugin "+p+"\n");
+                    logger.error("Failed to load plugin "+p);
                     continue;
                 }
                 catch (java.lang.InstantiationException e) {
-                    logger.error("Failed to load plugin "+p+"\n");
+                    logger.error("Failed to load plugin "+p);
                     continue;
                 }
                 catch (java.lang.IllegalAccessException e) {
-                    logger.error("Failed to load plugin "+p+"\n");
+                    logger.error("Failed to load plugin "+p);
                     continue;
                 }
             }

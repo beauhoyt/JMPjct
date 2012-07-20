@@ -83,13 +83,13 @@ public class Proxy extends Thread {
             this.mysqlOut = this.mysqlSocket.getOutputStream();
         }
         catch (IOException e) {
-            this.logger.fatal("IOException: "+e+"\n");
+            this.logger.fatal("IOException: "+e);
             return;
         }
     }
 
     public void run() {
-        this.logger.info("MODE_INIT\n");
+        this.logger.info("MODE_INIT");
         this.mode = MySQL_Flags.MODE_INIT;
         this.nextMode = MySQL_Flags.MODE_READ_HANDSHAKE;
         this.running = 1;
@@ -100,43 +100,43 @@ public class Proxy extends Thread {
             
             switch (this.mode) {
                 case MySQL_Flags.MODE_READ_HANDSHAKE:
-                    this.logger.info("MODE_READ_HANDSHAKE\n");
+                    this.logger.info("MODE_READ_HANDSHAKE");
                     this.nextMode = MySQL_Flags.MODE_READ_AUTH;
                     this.read_handshake();
                     break;
                 
                 case MySQL_Flags.MODE_READ_AUTH:
-                    this.logger.info("MODE_READ_AUTH\n");
+                    this.logger.info("MODE_READ_AUTH");
                     this.nextMode = MySQL_Flags.MODE_READ_AUTH_RESULT;
                     this.read_auth();
                     break;
                 
                 case MySQL_Flags.MODE_READ_AUTH_RESULT:
-                    this.logger.info("MODE_READ_AUTH_RESULT\n");
+                    this.logger.info("MODE_READ_AUTH_RESULT");
                     this.nextMode = MySQL_Flags.MODE_READ_QUERY;
                     this.read_auth_result();
                     break;
                 
                 case MySQL_Flags.MODE_READ_QUERY:
-                    this.logger.info("MODE_READ_QUERY\n");
+                    this.logger.info("MODE_READ_QUERY");
                     this.nextMode = MySQL_Flags.MODE_READ_QUERY_RESULT;
                     this.read_query();
                     break;
                 
                 case MySQL_Flags.MODE_READ_QUERY_RESULT:
-                    this.logger.info("MODE_READ_QUERY_RESULT\n");
+                    this.logger.info("MODE_READ_QUERY_RESULT");
                     this.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
                     this.read_query_result();
                     break;
                 
                 case MySQL_Flags.MODE_SEND_QUERY_RESULT:
-                    this.logger.info("MODE_SEND_QUERY_RESULT\n");
+                    this.logger.info("MODE_SEND_QUERY_RESULT");
                     this.nextMode = MySQL_Flags.MODE_READ_QUERY;
                     this.send_query_result();
                     break;
                 
                 default:
-                    this.logger.fatal("UNKNOWN MODE "+this.mode+"\n");
+                    this.logger.fatal("UNKNOWN MODE "+this.mode);
                     this.halt();
                     break;
             }
@@ -146,10 +146,10 @@ public class Proxy extends Thread {
         
         this.mode = MySQL_Flags.MODE_CLEANUP;
         this.nextMode = MySQL_Flags.MODE_CLEANUP;
-        this.logger.info("MODE_CLEANUP\n");
+        this.logger.info("MODE_CLEANUP");
         this.call_plugins();
         
-        this.logger.info("\nExiting thread.\n");
+        this.logger.info("Exiting thread.");
     }
     
     public void halt() {
@@ -195,7 +195,7 @@ public class Proxy extends Thread {
                     break;
                 
                 default:
-                    this.logger.fatal("UNKNOWN MODE "+this.mode+"\n");
+                    this.logger.fatal("UNKNOWN MODE "+this.mode);
                     this.halt();
                     break;
             }
@@ -230,7 +230,7 @@ public class Proxy extends Thread {
             }
             this.logger.debug("Reading Row "+this.buffer.size()+"\r");
         } while (packet[4] != MySQL_Flags.EOF);
-        this.logger.debug("\n");
+        this.logger.debug("");
         
         // Do we have more results?
         this.offset=7;
@@ -256,7 +256,7 @@ public class Proxy extends Thread {
             }
         }
         catch (IOException e) {
-            this.logger.fatal("IOException: "+e+"\n");
+            this.logger.fatal("IOException: "+e);
             this.halt();
             return null;
         }
@@ -277,7 +277,7 @@ public class Proxy extends Thread {
             }
         }
         catch (IOException e) {
-            this.logger.fatal("IOException: "+e+"\n");
+            this.logger.fatal("IOException: "+e);
             this.halt();
             return null;
         }
@@ -294,7 +294,7 @@ public class Proxy extends Thread {
             }
             catch (IOException e) {
                 this.halt();
-                this.logger.fatal("IOException: "+e+"\n");
+                this.logger.fatal("IOException: "+e);
                 return;
             }
         }
@@ -609,7 +609,7 @@ public class Proxy extends Thread {
             return value;
         }
         
-        this.logger.fatal("Decoding int failed!\n");
+        this.logger.fatal("Decoding int failed!");
         this.halt();
         return -1;
     }
@@ -681,7 +681,7 @@ public class Proxy extends Thread {
             return;
         }
         
-        this.logger.fatal("Encoding int "+size+" @ "+this.packet_id+":"+this.offset+" failed!\n");
+        this.logger.fatal("Encoding int "+size+" @ "+this.packet_id+":"+this.offset+" failed!");
         this.halt();
         return;
     }
