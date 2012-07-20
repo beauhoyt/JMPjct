@@ -61,6 +61,9 @@ public class Proxy extends Thread {
     public String user = "";
     public long clientMaxPacketSize = 0;
     
+    // Buffer or directly pass though the data
+    public boolean bufferResultSet = true;
+    
     // Modes
     public int mode = 0;
     
@@ -225,7 +228,6 @@ public class Proxy extends Thread {
         }
         
         do {
-            packet = null;
             packet = this.read_packet(this.mysqlIn);
             if (packet == null) {
                 this.halt();
@@ -236,6 +238,41 @@ public class Proxy extends Thread {
         // Do we have more results?
         this.offset=7;
         long statusFlags = this.get_fixed_int(2);
+        if ((statusFlags & MySQL_Flags.SERVER_MORE_RESULTS_EXISTS) != 0) {
+            this.logger.trace("More Result Sets.");
+            this.read_packet(this.mysqlIn);
+            this.read_full_result_set(this.mysqlIn);
+        }
+    }
+    
+    public void proxy_result_set(InputStream in) {
+        // Assume we have the start of a result set already
+        this.offset = 4;
+        long colCount = this.get_lenenc_int();
+        byte[] packet;
+        
+        for (int i = 0; i < (colCount+1); i++) {
+            packet = this.read_packet(this.mysqlIn);
+            if (packet == null) {
+                this.halt();
+                return;
+            }
+            this.send_query_result();
+        }
+        
+        do {
+            this.send_query_result();
+            packet = this.read_packet(this.mysqlIn);
+            if (packet == null) {
+                this.halt();
+                return;
+            }
+        } while (packet[4] != MySQL_Flags.EOF);
+        
+        // Do we have more results?
+        this.offset=7;
+        long statusFlags = this.get_fixed_int(2);
+        this.send_query_result();
         if ((statusFlags & MySQL_Flags.SERVER_MORE_RESULTS_EXISTS) != 0) {
             this.logger.trace("More Result Sets.");
             this.read_packet(this.mysqlIn);
@@ -269,7 +306,6 @@ public class Proxy extends Thread {
         }
         
         this.buffer.add(packet);
-        //Plugin_Debug.dump_packet(packet);
         size = (int)this.get_packet_size();
         
         byte[] packet_tmp = new byte[size+4];
@@ -300,7 +336,7 @@ public class Proxy extends Thread {
     
     public void write(OutputStream out) {
         
-        for (int i = 0;i < this.buffer.size(); i++) {
+        for (int i = 0; i < this.buffer.size(); i++) {
             byte[] packet = this.buffer.get(i);
             this.logger.trace("Writing packet "+i+" size "+packet.length);
             try {
@@ -474,7 +510,10 @@ public class Proxy extends Thread {
                 break;
             
             default:
-                this.read_full_result_set(this.mysqlIn);
+                if (this.bufferResultSet)
+                    this.read_full_result_set(this.mysqlIn);
+                else
+                    this.proxy_result_set(this.mysqlIn);
                 break;
         }
     }
