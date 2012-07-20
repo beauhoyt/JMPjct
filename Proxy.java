@@ -23,119 +23,43 @@ public class Proxy extends Thread {
     public ArrayList<Proxy_Plugin> plugins = new ArrayList<Proxy_Plugin>();
     
     // Packet Buffer. ArrayList so we can grow/shrink dynamically
-    public ArrayList<Integer> buffer = new ArrayList<Integer>();
+    public ArrayList<byte[]> buffer = new ArrayList<byte[]>();
+    public int packet_id = 0;
     public int offset = 0;
     
     // Stop the thread?
     public int running = 1;
 
     // Connection info
-    public int packetType = 0;
+    public byte packetType = 0;
     public String schema = "";
-    public int sequenceId = 0;
+    public long sequenceId = 0;
     public String query = "";
-    public int affectedRows = 0;
-    public int lastInsertId = 0;
-    public int statusFlags = 0;
-    public int warnings = 0;
-    public int errorCode = 0;
+    public long affectedRows = 0;
+    public long lastInsertId = 0;
+    public long statusFlags = 0;
+    public long warnings = 0;
+    public long errorCode = 0;
     public String sqlState = "";
     public String errorMessage = "";
-    public int protocolVersion = 0;
+    public long protocolVersion = 0;
     public String serverVersion = "";
-    public int connectionId = 0;
-    public int capabilityFlags = 0;
-    public int characterSet = 0;
-    public int serverCapabilityFlagsOffset = 0;
-    public int serverCapabilityFlags = 0;
-    public int serverCharacterSet = 0;
-    public int clientCapabilityFlags = 0;
-    public int clientCharacterSet = 0;
+    public long connectionId = 0;
+    public long capabilityFlags = 0;
+    public long characterSet = 0;
+    public long serverCapabilityFlagsOffset = 0;
+    public long serverCapabilityFlags = 0;
+    public long serverCharacterSet = 0;
+    public long clientCapabilityFlags = 0;
+    public long clientCharacterSet = 0;
     public String user = "";
-    public int clientMaxPacketSize = 0;
+    public long clientMaxPacketSize = 0;
     
     // Modes
     public int mode = 0;
     
     // Allow plugins to muck with the modes
     public int nextMode = 0;
-    
-    public static final int MODE_INIT                           = 0; // Connection opened
-    public static final int MODE_READ_HANDSHAKE                 = 1; // Read the handshake from the server, process it, and forward it
-    public static final int MODE_READ_AUTH                      = 2; // Read the reply from the client, process it, and forward it
-    public static final int MODE_READ_AUTH_RESULT               = 3; // Read the reply from the server, process it and forward it
-    public static final int MODE_READ_QUERY                     = 4; // Read the query from the client, process it, and forward
-    public static final int MODE_READ_QUERY_RESULT              = 5; // Read the result set from the server, and process it
-    public static final int MODE_SEND_QUERY_RESULT              = 6; // Send a result set to the client
-    public static final int MODE_CLEANUP                        = 7; // Connection closed
-    
-    // Packet types
-    public static final int COM_QUIT                            = 0x01;
-    public static final int COM_INIT_DB                         = 0x02;
-    public static final int COM_QUERY                           = 0x03;
-    public static final int COM_FIELD_LIST                      = 0x04;
-    public static final int COM_CREATE_DB                       = 0x05;
-    public static final int COM_DROP_DB                         = 0x06;
-    public static final int COM_REFRESH                         = 0x07;
-    public static final int COM_SHUTDOWN                        = 0x08;
-    public static final int COM_STATISTICS                      = 0x09;
-    public static final int COM_PROCESS_INFO                    = 0x0a;
-    public static final int COM_PROCESS_KILL                    = 0x0c;
-    public static final int COM_DEBUG                           = 0x0d;
-    public static final int COM_PING                            = 0x0e;
-    public static final int COM_CHANGE_USER                     = 0x11;
-    public static final int COM_BINLOG_DUMP                     = 0x12;
-    public static final int COM_TABLE_DUMP                      = 0x13;
-    public static final int COM_CONNECT_OUT                     = 0x14;
-    public static final int COM_REGISTER_SLAVE                  = 0x15;
-    public static final int COM_STMT_PREPARE                    = 0x16;
-    public static final int COM_STMT_EXECUTE                    = 0x17;
-    public static final int COM_STMT_SEND_LONG_DATA             = 0x18;
-    public static final int COM_STMT_CLOSE                      = 0x19;
-    public static final int COM_STMT_RESET                      = 0x1a;
-    public static final int COM_SET_OPTION                      = 0x1b;
-    public static final int COM_STMT_FETCH                      = 0x1c;
-    public static final int COM_UNKNOWN                         = 0xff;
-    
-    public static final int OK                                  = 0x00;
-    public static final int ERR                                 = 0xff;
-    public static final int EOF                                 = 0xfe;
-    
-    public static final int SERVER_STATUS_IN_TRANS              = 0x0001;
-    public static final int SERVER_STATUS_AUTOCOMMIT            = 0x0002;
-    public static final int SERVER_MORE_RESULTS_EXISTS          = 0x0008;
-    public static final int SERVER_STATUS_NO_GOOD_INDEX_USED    = 0x0010;
-    public static final int SERVER_STATUS_NO_INDEX_USED         = 0x0020;
-    public static final int SERVER_STATUS_CURSOR_EXISTS         = 0x0040;
-    public static final int SERVER_STATUS_LAST_ROW_SENT         = 0x0080;
-    public static final int SERVER_STATUS_DB_DROPPED            = 0x0100;
-    public static final int SERVER_STATUS_NO_BACKSLASH_ESCAPES  = 0x0200;
-    public static final int SERVER_STATUS_METADATA_CHANGED      = 0x0400;
-    public static final int SERVER_QUERY_WAS_SLOW               = 0x0800;
-    public static final int SERVER_PS_OUT_PARAMS                = 0x1000;
-    
-    public static final int CLIENT_LONG_PASSWORD                = 0x0001;
-    public static final int CLIENT_FOUND_ROWS                   = 0x0002;
-    public static final int CLIENT_LONG_FLAG                    = 0x0004;
-    public static final int CLIENT_CONNECT_WITH_DB              = 0x0008;
-    public static final int CLIENT_NO_SCHEMA                    = 0x0010;
-    public static final int CLIENT_COMPRESS                     = 0x0020;
-    public static final int CLIENT_ODBC                         = 0x0040;
-    public static final int CLIENT_LOCAL_FILES                  = 0x0080;
-    public static final int CLIENT_IGNORE_SPACE                 = 0x0100;
-    public static final int CLIENT_PROTOCOL_41                  = 0x0200;
-    public static final int CLIENT_INTERACTIVE                  = 0x0400;
-    public static final int CLIENT_SSL                          = 0x0800;
-    public static final int CLIENT_IGNORE_SIGPIPE               = 0x1000;
-    public static final int CLIENT_TRANSACTIONS                 = 0x2000;
-    public static final int CLIENT_RESERVED                     = 0x4000;
-    public static final int CLIENT_SECURE_CONNECTION            = 0x8000;
-    public static final int CLIENT_MULTI_STATEMENTS             = 0x00010000;
-    public static final int CLIENT_MULTI_RESULTS                = 0x00020000;
-    public static final int CLIENT_PS_MULTI_RESULTS             = 0x00040000;
-    public static final int CLIENT_SSL_VERIFY_SERVER_CERT       = 0x40000000;
-    public static final int CLIENT_REMEMBER_OPTIONS             = 0x80000000;
-    
     
     public Proxy(Socket clientSocket, String mysqlHost, int mysqlPort, ArrayList<Proxy_Plugin> plugins) {
         this.clientSocket = clientSocket;
@@ -153,14 +77,15 @@ public class Proxy extends Thread {
             this.mysqlOut = this.mysqlSocket.getOutputStream();
         }
         catch (IOException e) {
+            System.err.print("IOException: "+e+"\n");
             return;
         }
     }
 
     public void run() {
-        System.err.print("MODE_INIT\n");
-        this.mode = Proxy.MODE_INIT;
-        this.nextMode = Proxy.MODE_READ_HANDSHAKE;
+        //System.err.print("MODE_INIT\n");
+        this.mode = MySQL_Flags.MODE_INIT;
+        this.nextMode = MySQL_Flags.MODE_READ_HANDSHAKE;
         this.running = 1;
         this.call_plugins();
         this.mode = this.nextMode;
@@ -168,46 +93,40 @@ public class Proxy extends Thread {
         while (this.running == 1) {
             
             switch (this.mode) {
-                case Proxy.MODE_READ_HANDSHAKE:
-                    System.err.print("MODE_READ_HANDSHAKE\n");
-                    this.nextMode = Proxy.MODE_READ_AUTH;
+                case MySQL_Flags.MODE_READ_HANDSHAKE:
+                    //System.err.print("MODE_READ_HANDSHAKE\n");
+                    this.nextMode = MySQL_Flags.MODE_READ_AUTH;
                     this.read_handshake();
-                    this.call_plugins();
                     break;
                 
-                case Proxy.MODE_READ_AUTH:
-                    System.err.print("MODE_READ_AUTH\n");
-                    this.nextMode = Proxy.MODE_READ_AUTH_RESULT;
+                case MySQL_Flags.MODE_READ_AUTH:
+                    //System.err.print("MODE_READ_AUTH\n");
+                    this.nextMode = MySQL_Flags.MODE_READ_AUTH_RESULT;
                     this.read_auth();
-                    this.call_plugins();
                     break;
                 
-                case Proxy.MODE_READ_AUTH_RESULT:
-                    System.err.print("MODE_READ_AUTH_RESULT\n");
-                    this.nextMode = Proxy.MODE_READ_QUERY;
+                case MySQL_Flags.MODE_READ_AUTH_RESULT:
+                    //System.err.print("MODE_READ_AUTH_RESULT\n");
+                    this.nextMode = MySQL_Flags.MODE_READ_QUERY;
                     this.read_auth_result();
-                    this.call_plugins();
                     break;
                 
-                case Proxy.MODE_READ_QUERY:
-                    System.err.print("MODE_READ_QUERY\n");
-                    this.nextMode = Proxy.MODE_READ_QUERY_RESULT;
+                case MySQL_Flags.MODE_READ_QUERY:
+                    //System.err.print("MODE_READ_QUERY\n");
+                    this.nextMode = MySQL_Flags.MODE_READ_QUERY_RESULT;
                     this.read_query();
-                    this.call_plugins();
                     break;
                 
-                case Proxy.MODE_READ_QUERY_RESULT:
-                    System.err.print("MODE_READ_QUERY_RESULT\n");
-                    this.nextMode = Proxy.MODE_SEND_QUERY_RESULT;
+                case MySQL_Flags.MODE_READ_QUERY_RESULT:
+                    //System.err.print("MODE_READ_QUERY_RESULT\n");
+                    this.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
                     this.read_query_result();
-                    this.call_plugins();
                     break;
                 
-                case Proxy.MODE_SEND_QUERY_RESULT:
-                    System.err.print("MODE_SEND_QUERY_RESULT\n");
-                    this.nextMode = Proxy.MODE_READ_QUERY;
+                case MySQL_Flags.MODE_SEND_QUERY_RESULT:
+                    //System.err.print("MODE_SEND_QUERY_RESULT\n");
+                    this.nextMode = MySQL_Flags.MODE_READ_QUERY;
                     this.send_query_result();
-                    this.call_plugins();
                     break;
                 
                 default:
@@ -215,21 +134,21 @@ public class Proxy extends Thread {
                     this.halt();
                     break;
             }
+            this.call_plugins();
             this.mode = this.nextMode;
-            
         }
         
-        this.mode = Proxy.MODE_CLEANUP;
-        this.nextMode = Proxy.MODE_CLEANUP;
-        System.err.print("MODE_CLEANUP\n");
+        this.mode = MySQL_Flags.MODE_CLEANUP;
+        this.nextMode = MySQL_Flags.MODE_CLEANUP;
+        //System.err.print("MODE_CLEANUP\n");
         this.call_plugins();
         
-        System.err.print("Exiting thread.\n");
+        System.err.print("\nExiting thread.\n");
     }
     
     public void halt() {
-        this.mode = Proxy.MODE_CLEANUP;
-        this.nextMode = Proxy.MODE_CLEANUP;
+        this.mode = MySQL_Flags.MODE_CLEANUP;
+        this.nextMode = MySQL_Flags.MODE_CLEANUP;
         this.running = 0;
     }
     
@@ -237,35 +156,35 @@ public class Proxy extends Thread {
         for (int i = 0; i < this.plugins.size(); i++) {
             Proxy_Plugin plugin = this.plugins.get(i);
             switch (this.mode) {
-                case Proxy.MODE_INIT:
+                case MySQL_Flags.MODE_INIT:
                     plugin.init(this);
                     break;
                 
-                case Proxy.MODE_READ_HANDSHAKE:
+                case MySQL_Flags.MODE_READ_HANDSHAKE:
                     plugin.read_handshake(this);
                     break;
                 
-                case Proxy.MODE_READ_AUTH:
+                case MySQL_Flags.MODE_READ_AUTH:
                     plugin.read_auth(this);
                     break;
                 
-                case Proxy.MODE_READ_AUTH_RESULT:
+                case MySQL_Flags.MODE_READ_AUTH_RESULT:
                     plugin.read_auth_result(this);
                     break;
                 
-                case Proxy.MODE_READ_QUERY:
+                case MySQL_Flags.MODE_READ_QUERY:
                     plugin.read_query(this);
                     break;
                 
-                case Proxy.MODE_READ_QUERY_RESULT:
+                case MySQL_Flags.MODE_READ_QUERY_RESULT:
                     plugin.read_query_result(this);
                     break;
                 
-                case Proxy.MODE_SEND_QUERY_RESULT:
+                case MySQL_Flags.MODE_SEND_QUERY_RESULT:
                     plugin.send_query_result(this);
                     break;
                 
-                case Proxy.MODE_CLEANUP:
+                case MySQL_Flags.MODE_CLEANUP:
                     plugin.cleanup(this);
                     break;
                 
@@ -279,250 +198,209 @@ public class Proxy extends Thread {
     
     public void clear_buffer() {
         this.offset = 0;
+        this.packet_id = 0;
         this.buffer.clear();
     }
     
     public void read_full_result_set(InputStream in) {
         // Assume we have the start of a result set already
         this.offset = 4;
-        int colCount = this.get_lenenc_int();
-        
-        // Assume we have a result set
-        ArrayList<Integer> resultset = new ArrayList<Integer>();
-        resultset.addAll(this.buffer);
+        long colCount = this.get_lenenc_int();
+        byte[] packet;
         
         for (int i = 0; i < (colCount+1); i++) {
-            this.clear_buffer();
-            this.read_sized_packet(this.mysqlIn);
-            resultset.addAll(this.buffer);
+            packet = this.read_packet(this.mysqlIn);
+            if (packet == null) {
+                this.halt();
+                return;
+            }
         }
         
         do {
-            this.clear_buffer();
-            this.read_sized_packet(this.mysqlIn);
-            resultset.addAll(this.buffer);
-        } while(this.buffer.get(4) != this.EOF);
+            packet = this.read_packet(this.mysqlIn);
+            if (packet == null) {
+                this.halt();
+                return;
+            }
+            System.err.print("Reading Row "+this.buffer.size()+"\r");
+        } while (packet[4] != MySQL_Flags.EOF);
+        System.err.print("\n");
         
         // Do we have more results?
         this.offset=7;
-        int statusFlags = this.get_fixed_int(2);
-        if ((statusFlags & Proxy.SERVER_MORE_RESULTS_EXISTS) != 0) {
-            this.clear_buffer();
-            this.read_sized_packet(this.mysqlIn);
+        long statusFlags = this.get_fixed_int(2);
+        if ((statusFlags & MySQL_Flags.SERVER_MORE_RESULTS_EXISTS) != 0) {
+            this.read_packet(this.mysqlIn);
             this.read_full_result_set(this.mysqlIn);
         }
-        else
-            this.clear_buffer();
-        
-        // Prepend the result set to the buffer. This should transverse the stack correctly
-        this.buffer.addAll(0, resultset);
     }
     
-    public void read_sized_packet(InputStream in) {
+    public byte[] read_packet(InputStream in) {
         int b = 0;
         int size = 0;
-        try {
-            while (in.available() == 0 && this.running == 1) 
-                Thread.sleep(10);
-            
-            // Read size (3) and Sequence id (1)
-            for (int i = 0; i < (3+1); i++) {
-                b = in.read();
-                if (b == -1) {
-                    this.halt();
-                    return;
-                }
-                this.buffer.add(b);
-            }
-
-            size = this.get_packet_size();
-            
-            for (int i = 0; i < size; i++) {
-                b = in.read();
-                if (b == -1) {
-                    this.halt();
-                    return;
-                }
-                this.buffer.add(b);
-            }
-        }
-        catch (IOException e) {
-            System.err.print("IOException.\n");
-            this.halt();
-        }
-        catch (InterruptedException e) {
-            System.err.print("InterruptedException.\n");
-            this.halt();
-        }
-    }
-    
-    public void read_unsized_packet(InputStream in) {
-        int b = 0;
+        byte[] packet = new byte[3];
+        this.packet_id = this.buffer.size();
         
         try {
-            while (in.available() == 0 && this.running == 1) 
-                Thread.sleep(10);
-            
-            // Read from the client
-            while (in.available() > 0) {
-
-                b = in.read();
-                
-                if (b == -1) {
-                    this.halt();
-                    return;
-                }
-                this.buffer.add(b);
+            // Read size (3) and Sequence id (1)
+            b = in.read(packet, 0, 3);
+            if (b == -1) {
+                this.halt();
+                return null;
             }
         }
         catch (IOException e) {
+            System.err.print("IOException: "+e+"\n");
             this.halt();
-            System.err.print("IOException.\n");
+            return null;
         }
-        catch (InterruptedException e) {
+        
+        this.buffer.add(packet);
+        size = (int)this.get_packet_size();
+        
+        byte[] packet_tmp = new byte[size+4];
+        System.arraycopy(packet, 0, packet_tmp, 0, 3);
+        packet = packet_tmp;
+        packet_tmp = null;
+        
+        try {
+            b = in.read(packet, 3, packet.length-3);
+            if (b == -1) {
+                this.halt();
+                return null;
+            }
+        }
+        catch (IOException e) {
+            System.err.print("IOException: "+e+"\n");
             this.halt();
-            System.err.print("InterruptedException.\n");
+            return null;
         }
+        this.buffer.set(this.packet_id, packet);
+        return packet;
     }
     
     public void write(OutputStream out) {
-        int size = this.buffer.size();
-        int i = 0;
         
-        if (size == 0)
-            return;
-        
-        try {
-            for (i = 0; i < size; i++)
-                out.write(this.buffer.get(i));
-            this.clear_buffer();
+        for (int i = 0;i < this.buffer.size(); i++) {
+            byte[] packet = this.buffer.get(i);
+            try {
+                out.write(packet);
+            }
+            catch (IOException e) {
+                this.halt();
+                System.err.print("IOException: "+e+"\n");
+                return;
+            }
         }
-        catch (IOException e) {
-            this.halt();
-            System.err.print("IOException.\n");
-        }
+        this.clear_buffer();
     }
     
     public void read_handshake() {
-        this.read_unsized_packet(this.mysqlIn);
+        this.read_packet(this.mysqlIn);
         
-        this.offset = 0;
+        this.offset = 4;
         this.protocolVersion = this.get_fixed_int(1);
-        this.offset += 4;
+        this.offset += 1; //filler
         this.serverVersion   = this.get_nul_string();
         this.connectionId    = this.get_fixed_int(4);
         this.offset += 8; // challenge-part-1
         this.offset += 1; //filler
+        
         this.serverCapabilityFlags = this.get_fixed_int(2);
         
         // Remove Compression and SSL support so we can sniff traffic easily
-        this.offset -= 2;
-        if ((this.serverCapabilityFlags & Proxy.CLIENT_COMPRESS) != 0)
-            this.serverCapabilityFlags ^= Proxy.CLIENT_COMPRESS;
         
-        if ((this.serverCapabilityFlags & Proxy.CLIENT_SSL) != 0)
-            this.serverCapabilityFlags ^= Proxy.CLIENT_SSL;
+        if ((this.serverCapabilityFlags & MySQL_Flags.CLIENT_COMPRESS) != 0)
+            this.serverCapabilityFlags ^= MySQL_Flags.CLIENT_COMPRESS;
+        
+        if ((this.serverCapabilityFlags & MySQL_Flags.CLIENT_SSL) != 0)
+            this.serverCapabilityFlags ^= MySQL_Flags.CLIENT_SSL;
         
         this.offset -= 2;
         this.set_fixed_int(2, this.serverCapabilityFlags);
-        
         this.serverCharacterSet = this.get_fixed_int(1);
+        this.statusFlags = this.get_fixed_int(2);
 
         this.write(this.clientOut);
     }
     
     public void read_auth_result() {
-        this.read_unsized_packet(this.mysqlIn);
-        if (this.packetType != Proxy.OK)
+        this.read_packet(this.mysqlIn);
+        if (this.packetType != MySQL_Flags.OK)
             this.halt();
         this.write(this.clientOut);
     }
     
     public void read_auth() {
-        this.read_unsized_packet(this.clientIn);
+        this.read_packet(this.clientIn);
         
-        this.offset = 5;
+        this.offset = 4;
         this.clientCapabilityFlags = this.get_fixed_int(2);
         
-        if ((this.clientCapabilityFlags & Proxy.CLIENT_PROTOCOL_41) != 0) {
-            this.offset = 5;
-            this.clientCapabilityFlags = this.get_fixed_int(4);
-            this.offset -= 4;
-            // Remove Compression and SSL support so we can sniff traffic easily
-            if ((this.clientCapabilityFlags & Proxy.CLIENT_COMPRESS) != 0)
-                this.clientCapabilityFlags ^= Proxy.CLIENT_COMPRESS;
-            
-            if ((this.clientCapabilityFlags & Proxy.CLIENT_SSL) != 0)
-                this.clientCapabilityFlags ^= Proxy.CLIENT_SSL;
-                
-            if ((this.clientCapabilityFlags & Proxy.CLIENT_MULTI_STATEMENTS) != 0)
-                this.clientCapabilityFlags ^= Proxy.CLIENT_MULTI_STATEMENTS;
-                
-            if ((this.clientCapabilityFlags & Proxy.CLIENT_MULTI_RESULTS) != 0)
-                this.clientCapabilityFlags ^= Proxy.CLIENT_MULTI_RESULTS;
-                
-            if ((this.clientCapabilityFlags & Proxy.CLIENT_PS_MULTI_RESULTS) != 0)
-                this.clientCapabilityFlags ^= Proxy.CLIENT_PS_MULTI_RESULTS;
-            
-            this.set_fixed_int(4, this.clientCapabilityFlags);
+        if ((this.clientCapabilityFlags & MySQL_Flags.CLIENT_PROTOCOL_41) == 0) {
+            this.halt();
+            return;
+        }
         
-            this.clientMaxPacketSize = this.get_fixed_int(4);
-            this.clientCharacterSet = this.get_fixed_int(1);
-            this.offset += 22;
-            this.user = this.get_nul_string();
+        this.offset = 4;
+        this.clientCapabilityFlags = this.get_fixed_int(4);
+        this.offset -= 4;
+        // Remove Compression and SSL support so we can sniff traffic easily
+        if ((this.clientCapabilityFlags & MySQL_Flags.CLIENT_COMPRESS) != 0)
+            this.clientCapabilityFlags ^= MySQL_Flags.CLIENT_COMPRESS;
+        
+        if ((this.clientCapabilityFlags & MySQL_Flags.CLIENT_SSL) != 0)
+            this.clientCapabilityFlags ^= MySQL_Flags.CLIENT_SSL;
             
-            // auth-response
-            if ((this.clientCapabilityFlags & Proxy.CLIENT_SECURE_CONNECTION) != 0)
-                this.get_lenenc_string();
-            else
-                this.get_nul_string();
+        if ((this.clientCapabilityFlags & MySQL_Flags.CLIENT_MULTI_STATEMENTS) != 0)
+            this.clientCapabilityFlags ^= MySQL_Flags.CLIENT_MULTI_STATEMENTS;
             
-            this.schema = this.get_eop_string();
-        }
-        else {
-            this.offset = 5;
-            this.clientCapabilityFlags = this.get_fixed_int(2);
+        if ((this.clientCapabilityFlags & MySQL_Flags.CLIENT_MULTI_RESULTS) != 0)
+            this.clientCapabilityFlags ^= MySQL_Flags.CLIENT_MULTI_RESULTS;
             
-            this.offset -= 2;
-            // Remove Compression and SSL support so we can sniff traffic easily
-            if ((this.clientCapabilityFlags & Proxy.CLIENT_COMPRESS) != 0)
-                this.clientCapabilityFlags ^= Proxy.CLIENT_COMPRESS;
-            
-            if ((this.clientCapabilityFlags & Proxy.CLIENT_SSL) != 0)
-                this.clientCapabilityFlags ^= Proxy.CLIENT_SSL;
-            
-            this.set_fixed_int(2, this.clientCapabilityFlags);
-            
-            this.clientMaxPacketSize = this.get_fixed_int(3);
-            this.user = this.get_nul_string();
-        }
+        if ((this.clientCapabilityFlags & MySQL_Flags.CLIENT_PS_MULTI_RESULTS) != 0)
+            this.clientCapabilityFlags ^= MySQL_Flags.CLIENT_PS_MULTI_RESULTS;
+        
+        this.set_fixed_int(4, this.clientCapabilityFlags);
+    
+        this.clientMaxPacketSize = this.get_fixed_int(4);
+        this.clientCharacterSet = this.get_fixed_int(1);
+        this.offset += 23;
+        this.user = this.get_nul_string();
+        
+        // auth-response
+        if ((this.clientCapabilityFlags & MySQL_Flags.CLIENT_SECURE_CONNECTION) != 0)
+            this.get_lenenc_string();
+        else
+            this.get_nul_string();
+        
+        this.schema = this.get_eop_string();
         
         this.write(this.mysqlOut);
     }
     
     public void read_query() {
-        if (this.mode < Proxy.MODE_READ_AUTH_RESULT)
+        if (this.mode < MySQL_Flags.MODE_READ_AUTH_RESULT)
             return;
         
-        this.read_unsized_packet(this.clientIn);
-        
-        this.get_packet_size();
-        this.packetType = this.buffer.get(4);
-        this.sequenceId = this.buffer.get(3);
+        byte[] packet = this.read_packet(this.clientIn);
+        this.packetType = packet[4];
+        this.sequenceId = packet[3];
         
         switch (this.packetType) {
-            case Proxy.COM_QUIT:
+            case MySQL_Flags.COM_QUIT:
                 this.halt();
                 break;
             
             // Extract out the new default schema
-            case Proxy.COM_INIT_DB:
+            case MySQL_Flags.COM_INIT_DB:
+                this.offset = 5;
                 this.schema = this.get_eop_string();
                 break;
             
             // Query
-            case Proxy.COM_QUERY:
-                this.offset ++;
+            case MySQL_Flags.COM_QUERY:
+                this.offset = 5;
                 this.query = this.get_eop_string();
                 break;
             
@@ -534,19 +412,19 @@ public class Proxy extends Thread {
     }
     
     public void read_query_result() {
-        if (this.mode < Proxy.MODE_READ_AUTH_RESULT)
+        if (this.mode < MySQL_Flags.MODE_READ_AUTH_RESULT)
             return;
         
-        this.read_sized_packet(this.mysqlIn);
+        byte[] packet = this.read_packet(this.mysqlIn);
+        this.buffer.get(this.packet_id);
         
         this.get_packet_size();
-        this.packetType = this.buffer.get(4);
-        this.sequenceId = this.buffer.get(3);
+        this.packetType = packet[4];
+        this.sequenceId = packet[3];
         
         switch (this.packetType) {
-            case Proxy.OK:
-                
-                if (this.mode >= Proxy.MODE_READ_AUTH_RESULT) {
+            case MySQL_Flags.OK:
+                if (this.mode >= MySQL_Flags.MODE_READ_AUTH_RESULT) {
                     this.offset = 5;
                     this.affectedRows = this.get_lenenc_int();
                     this.lastInsertId = this.get_lenenc_int();
@@ -555,8 +433,8 @@ public class Proxy extends Thread {
                 }
                 break;
             
-            case Proxy.ERR:
-                if (this.mode >= Proxy.MODE_READ_AUTH_RESULT) {
+            case MySQL_Flags.ERR:
+                if (this.mode >= MySQL_Flags.MODE_READ_AUTH_RESULT) {
                     this.offset = 5;
                     this.errorCode    = this.get_fixed_int(2);
                     this.offset++;
@@ -573,8 +451,8 @@ public class Proxy extends Thread {
         this.write(this.clientOut);
     }
     
-    public int get_packet_size() {
-        int size = 0;
+    public long get_packet_size() {
+        long size = 0;
         int offset = this.offset;
         this.offset = 0;
         size = this.get_fixed_int(3);
@@ -582,64 +460,54 @@ public class Proxy extends Thread {
         return size;
     }
     
-    public void set_packet_size() {
-        int size = this.buffer.size();
-        
-        // Remove packet size size
-        size -= 3;
-        
-        // Remove sequence id
-        size -= 1;
-        
-        int offset = this.offset;
-        this.offset = 0;
-        this.set_fixed_int(3, size);
-        this.offset = offset;
-    }
-    
-    public int get_lenenc_int() {
-        int value = -1;
+    public long get_lenenc_int() {
+        byte[] packet = this.buffer.get(this.packet_id);
+        long value = 0;
         
         // 1 byte int
-        if (this.buffer.get(this.offset) < 251 && this.buffer.size() >= (1 + this.offset) ) {
-            value = this.buffer.get(this.offset);
+        if (packet[this.offset] < 251 && packet.length >= (1 + this.offset) ) {
+            value = packet[this.offset];
             this.offset += 1;
+            value = value & 0xFFL;
             return value;
         }
             
         // 2 byte int
-        if (this.buffer.get(this.offset) == 252 && this.buffer.size() >= (3 + this.offset) ) {
-            value = (this.buffer.get(this.offset+1) << 0)
-                  | (this.buffer.get(this.offset+2) << 8);
-                  
+        if (packet[this.offset] == 252 && packet.length >= (3 + this.offset) ) {
+            value |= packet[this.offset+2] & 0xFF;
+            value <<= 8;
+            value |= packet[this.offset+1] & 0xFF;
+            
             this.offset += 3;
             return value;
         }
         
         // 3 byte int
-        if (this.buffer.get(this.offset) == 253 && this.buffer.size() >= (4 + this.offset) ) {
-            value = (this.buffer.get(this.offset+1) << 0)
-                  | (this.buffer.get(this.offset+2) << 8)
-                  | (this.buffer.get(this.offset+3) << 16);
-                  
+        if (packet[this.offset] == 253 && packet.length >= (4 + this.offset) ) {
+            value |= packet[this.offset+3] & 0xFF;
+            value <<= 8;
+            value |= packet[this.offset+2] & 0xFF;
+            value <<= 8;
+            value |= packet[this.offset+1] & 0xFF;
+            
             this.offset += 4;
             return value;
         }
         
         // 8 byte int
-        if (this.buffer.get(this.offset) == 254  && this.buffer.size() >= (9 + this.offset) ) {
-            value = (this.buffer.get(this.offset+5) << 0)
-                  | (this.buffer.get(this.offset+6) << 8)
-                  | (this.buffer.get(this.offset+7) << 16)
-                  | (this.buffer.get(this.offset+8) << 24);
+        if (packet[this.offset] == 254  && packet.length >= (9 + this.offset) ) {
+            value = (packet[this.offset+5] << 0)
+                  | (packet[this.offset+6] << 8)
+                  | (packet[this.offset+7] << 16)
+                  | (packet[this.offset+8] << 24);
                   
             value = value << 32;
                   
-            value |= (this.buffer.get(this.offset+1) << 0)
-                  |  (this.buffer.get(this.offset+2) << 8)
-                  |  (this.buffer.get(this.offset+3) << 16)
-                  |  (this.buffer.get(this.offset+3) << 24);
-
+            value |= (packet[this.offset+1] << 0)
+                  |  (packet[this.offset+2] << 8)
+                  |  (packet[this.offset+3] << 16)
+                  |  (packet[this.offset+4] << 24);
+            
             this.offset += 9;
             return value;
         }
@@ -649,122 +517,177 @@ public class Proxy extends Thread {
         return -1;
     }
 
-    public void set_fixed_int(int size, int value) {
-        if (size == 8 && this.buffer.size() >= (this.offset + size)) {
-            this.buffer.set(this.offset+0, ((value >>  0) & 0xFF) );
-            this.buffer.set(this.offset+1, ((value >>  8) & 0xFF) );
-            this.buffer.set(this.offset+2, ((value >> 16) & 0xFF) );
-            this.buffer.set(this.offset+3, ((value >> 24) & 0xFF) );
-            this.buffer.set(this.offset+3, ((value >> 32) & 0xFF) );
-            this.buffer.set(this.offset+3, ((value >> 40) & 0xFF) );
-            this.buffer.set(this.offset+3, ((value >> 48) & 0xFF) );
-            this.buffer.set(this.offset+3, ((value >> 56) & 0xFF) );
-            
-            this.offset += size;
-            return;
-        }
-        
-
-        if (size == 4 && this.buffer.size() >= (this.offset + size)) {
-            this.buffer.set(this.offset+0, ((value >>  0) & 0xFF) );
-            this.buffer.set(this.offset+1, ((value >>  8) & 0xFF) );
-            this.buffer.set(this.offset+2, ((value >> 16) & 0xFF) );
-            this.buffer.set(this.offset+3, ((value >> 24) & 0xFF) );
-            this.offset += size;
-            return;
-        }
-        
-        if (size == 3 && this.buffer.size() >= (this.offset + size)) {
-            this.buffer.set(this.offset+0, ((value >>  0) & 0xFF) );
-            this.buffer.set(this.offset+1, ((value >>  8) & 0xFF) );
-            this.buffer.set(this.offset+2, ((value >> 16) & 0xFF) );
-            this.offset += size;
-            return;
-        }
-        
-        if (size == 2 && this.buffer.size() >= (this.offset + size)) {
-            this.buffer.set(this.offset+0, ((value >>  0) & 0xFF) );
-            this.buffer.set(this.offset+1, ((value >>  8) & 0xFF) );
-            this.offset += size;
-            return;
-        }
-        
-        if (size == 1 && this.buffer.size() >= (this.offset + size)) {
-            this.buffer.set(this.offset+0, ((value >>  0) & 0xFF) );
-            this.offset += size;
-            return;
-        }
-        
-        System.err.print("Setting int "+size+": "+value+" at offset "+this.offset+" failed!\n");
-        this.halt();
-        return;
-    }
-    
-    public int get_fixed_int(int size) {
-        int value = -1;
+    public long get_fixed_int(byte[] bytes) {
+        long value = 0;
         
         // 1 byte int
-        if (size == 1 && this.buffer.size() >= (size + this.offset) ) {
-            value = this.buffer.get(this.offset);
-            this.offset += size;
+        if (bytes.length == 1) {
+            value = bytes[0];
+            value = value & 0xFFL;
+            
             return value;
         }
             
         // 2 byte int
-        if (size == 2 && this.buffer.size() >= (size + this.offset) ) {
-            value = (this.buffer.get(this.offset+0) << 0)
-                  | (this.buffer.get(this.offset+1) << 8);
-            this.offset += size;
+        if (bytes.length == 2) {
+            value |= bytes[1] & 0xFF;
+            value <<= 8;
+            value |= bytes[0] & 0xFF;
+            
             return value;
         }
         
         // 3 byte int
-        if (size == 3 && this.buffer.size() >= (size + this.offset) ) {
-            value = (this.buffer.get(this.offset+0) << 0)
-                  | (this.buffer.get(this.offset+1) << 8)
-                  | (this.buffer.get(this.offset+2) << 16);
-            this.offset += size;
+        if (bytes.length == 3) {
+            value |= bytes[2] & 0xFF;
+            value <<= 8;
+            value |= bytes[1] & 0xFF;
+            value <<= 8;
+            value |= bytes[0] & 0xFF;
+            
             return value;
         }
         
         // 4 byte int
-        if (size == 4 && this.buffer.size() >= (size + this.offset) ) {
-            value = (this.buffer.get(this.offset+0) << 0)
-                  | (this.buffer.get(this.offset+1) << 8)
-                  | (this.buffer.get(this.offset+2) << 16)
-                  | (this.buffer.get(this.offset+3) << 24);
-            this.offset += size;
+        if (bytes.length == 4) {
+            value |= bytes[3] & 0xFF;
+            value <<= 8;
+            value |= bytes[2] & 0xFF;
+            value <<= 8;
+            value |= bytes[1] & 0xFF;
+            value <<= 8;
+            value |= bytes[0] & 0xFF;
+                 
             return value;
         }
         
         // 8 byte int
-        if (size == 8 && this.buffer.size() >= (size + this.offset) ) {
-            value = (this.buffer.get(this.offset+4) << 0)
-                  | (this.buffer.get(this.offset+5) << 8)
-                  | (this.buffer.get(this.offset+6) << 16)
-                  | (this.buffer.get(this.offset+7) << 24);
+        if (bytes.length == 8) {
+            value = (bytes[4] << 0)
+                  | (bytes[5] << 8)
+                  | (bytes[6] << 16)
+                  | (bytes[7] << 24);
                   
             value = value << 32;
                   
-            value |= (this.buffer.get(this.offset+0) << 0)
-                  |  (this.buffer.get(this.offset+1) << 8)
-                  |  (this.buffer.get(this.offset+2) << 16)
-                  |  (this.buffer.get(this.offset+3) << 24);
+            value |= (bytes[0] << 0)
+                  |  (bytes[1] << 8)
+                  |  (bytes[2] << 16)
+                  |  (bytes[3] << 24);
                   
-            this.offset += size;
+            if (bytes[7] != 0x00) {
+                value = value & 0xFFFFFFFFFFFFFFFFL;
+            }
+            else if (bytes[6] != 0x00) {
+                value = value & 0xFFFFFFFFFFFFFFL;
+            }
+            else if (bytes[5] != 0x00) {
+                value = value & 0xFFFFFFFFFFFFL;
+            }
+            else if (bytes[4] != 0x00) {
+                value = value & 0xFFFFFFFFFFL;
+            }
+            else if (bytes[3] != 0x00) {
+                value = value & 0xFFFFFFFFL;
+            }
+            else if (bytes[2] != 0x00) {
+                value = value & 0xFFFFFFL;
+            }
+            else if (bytes[1] != 0x00) {
+                value = value & 0xFFFFL;
+            }
+            else {
+                value = value & 0xFFL;
+            } 
+                  
             return value;
         }
         
-        System.err.print("Decoding int "+size+" at offset "+this.offset+" failed!\n");
+        System.err.print("Decoding int failed!\n");
+        this.halt();
         return -1;
     }
     
+    public long get_fixed_int(int size) {
+        byte[] packet = this.buffer.get(this.packet_id);
+        byte[] bytes = null;
+        long value;
+        
+        if ( packet.length < (size + this.offset))
+            return -1;
+        
+        bytes = new byte[size];
+        System.arraycopy(packet, this.offset, bytes, 0, size);
+        value = this.get_fixed_int(bytes);
+        this.offset += size;
+        return value;
+    }
+    
+    public void set_fixed_int(int size, long value) {
+        byte[] packet = this.buffer.get(this.packet_id);
+        
+        if (size == 8 && packet.length >= (this.offset + size)) {
+            packet[this.offset+0] = (byte) ((value >>  0) & 0xFF);
+            packet[this.offset+1] = (byte) ((value >>  8) & 0xFF);
+            packet[this.offset+2] = (byte) ((value >> 16) & 0xFF);
+            packet[this.offset+3] = (byte) ((value >> 24) & 0xFF);
+            packet[this.offset+4] = (byte) ((value >> 32) & 0xFF);
+            packet[this.offset+5] = (byte) ((value >> 40) & 0xFF);
+            packet[this.offset+6] = (byte) ((value >> 48) & 0xFF);
+            packet[this.offset+7] = (byte) ((value >> 56) & 0xFF);
+            
+            this.offset += size;
+            this.buffer.set(this.packet_id, packet);
+            return;
+        }
+    
+        if (size == 4 && packet.length >= (this.offset + size)) {
+            packet[this.offset+0] = (byte) ((value >>  0) & 0xFF);
+            packet[this.offset+1] = (byte) ((value >>  8) & 0xFF);
+            packet[this.offset+2] = (byte) ((value >> 16) & 0xFF);
+            packet[this.offset+3] = (byte) ((value >> 24) & 0xFF);
+            this.offset += size;
+            this.buffer.set(this.packet_id, packet);
+            return;
+        }
+        
+        if (size == 3 && packet.length >= (this.offset + size)) {
+            packet[this.offset+0] = (byte) ((value >>  0) & 0xFF);
+            packet[this.offset+1] = (byte) ((value >>  8) & 0xFF);
+            packet[this.offset+2] = (byte) ((value >> 16) & 0xFF);
+            this.offset += size;
+            this.buffer.set(this.packet_id, packet);
+            return;
+        }
+        
+        if (size == 2 && packet.length >= (this.offset + size)) {
+            packet[this.offset+0] = (byte) ((value >>  0) & 0xFF);
+            packet[this.offset+1] = (byte) ((value >>  8) & 0xFF);
+            this.offset += size;
+            this.buffer.set(this.packet_id, packet);
+            return;
+        }
+        
+        if (size == 1 && packet.length >= (this.offset + size)) {
+            packet[this.offset+0] = (byte) ((value >>  0) & 0xFF);
+            this.offset += size;
+            this.buffer.set(this.packet_id, packet);
+            return;
+        }
+        
+        System.err.print("Encoding int "+size+" @ "+this.packet_id+":"+this.offset+" failed!\n");
+        this.halt();
+        return;
+    }
+   
+    
     public String get_fixed_string(int len) {
+        byte[] packet = this.buffer.get(this.packet_id);
         String str = "";
         int i = 0;
         
         for (i = this.offset; i < this.offset+len; i++)
-            str += Proxy.int2char(this.buffer.get(i));
+            str += Proxy.int2char(packet[i]);
             
         this.offset += i;
         
@@ -772,28 +695,27 @@ public class Proxy extends Thread {
     }
     
     public String get_eop_string() {
+        byte[] packet = this.buffer.get(this.packet_id);
         String str = "";
         int i = 0;
         
-        for (i = this.offset; i < this.buffer.size(); i++)
-            str += Proxy.int2char(this.buffer.get(i));
+        for (i = this.offset; i < packet.length; i++)
+            str += Proxy.int2char(packet[i]);
         this.offset += i;
         
         return str;
     }
     
     public String get_nul_string() {
+        byte[] packet = this.buffer.get(this.packet_id);
         String str = "";
-        int i = 0;
-        int b = 0;
         
-        for (i = this.offset; i < this.buffer.size(); i++) {
-            b = this.buffer.get(i).intValue();
-            if (b == 0x00) {
+        for (int i = this.offset; i < packet.length; i++) {
+            if (packet[i] == 0x00) {
                 this.offset += 1;
                 break;
             }
-            str += Proxy.int2char(b);
+            str += Proxy.int2char(packet[i]);
             this.offset += 1;
         }
         
@@ -801,27 +723,21 @@ public class Proxy extends Thread {
     }
 
     public String get_lenenc_string() {
+        byte[] packet = this.buffer.get(this.packet_id);
         String str = "";
-        int b = 0;
         int i = 0;
+        int size = (int)this.get_lenenc_int();
+        size += this.offset;
         
-        for (i = this.offset; i < this.buffer.size(); i++) {
-            b = this.buffer.get(i).intValue();
-            if (b == 0x00)
-                break;
-            str += Proxy.int2char(b);
+        for (i = this.offset; i < size; i++) {
+            str += Proxy.int2char(packet[i]);
         }
-        this.offset += i;
+        this.offset = size;
         
         return str;
     }
     
-    public static char int2char(int i) {
+    public static char int2char(byte i) {
         return (char)i;
     }
-    
-    public static char int2char(Integer i) {
-        return (char)i.intValue();
-    }
-    
 }
