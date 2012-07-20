@@ -153,6 +153,7 @@ public class Proxy extends Thread {
     }
     
     public void halt() {
+        this.logger.info("Halting!");
         this.mode = MySQL_Flags.MODE_CLEANUP;
         this.nextMode = MySQL_Flags.MODE_CLEANUP;
         this.running = 0;
@@ -203,6 +204,7 @@ public class Proxy extends Thread {
     }
     
     public void clear_buffer() {
+        this.logger.trace("Clearing Buffer.");
         this.offset = 0;
         this.packet_id = 0;
         this.buffer.clear();
@@ -220,22 +222,22 @@ public class Proxy extends Thread {
                 this.halt();
                 return;
             }
-            this.logger.trace("Reading Column "+this.buffer.size());
         }
         
         do {
+            packet = null;
             packet = this.read_packet(this.mysqlIn);
             if (packet == null) {
                 this.halt();
                 return;
             }
-            this.logger.trace("Reading Row "+this.buffer.size());
         } while (packet[4] != MySQL_Flags.EOF);
         
         // Do we have more results?
         this.offset=7;
         long statusFlags = this.get_fixed_int(2);
         if ((statusFlags & MySQL_Flags.SERVER_MORE_RESULTS_EXISTS) != 0) {
+            this.logger.trace("More Result Sets.");
             this.read_packet(this.mysqlIn);
             this.read_full_result_set(this.mysqlIn);
         }
@@ -248,12 +250,17 @@ public class Proxy extends Thread {
         this.packet_id = this.buffer.size();
         
         try {
-            // Read size (3) and Sequence id (1)
-            b = in.read(packet, 0, 3);
-            if (b == -1) {
-                this.halt();
-                return null;
-            }
+            // Read size (3)
+            int offset = 0;
+            int target = 3;
+            do {
+                b = in.read(packet, offset, (target - offset));
+                if (b == -1) {
+                    this.halt();
+                    return null;
+                }
+                offset += b;
+            } while (offset != target);
         }
         catch (IOException e) {
             this.logger.fatal("IOException: "+e);
@@ -262,6 +269,7 @@ public class Proxy extends Thread {
         }
         
         this.buffer.add(packet);
+        //Plugin_Debug.dump_packet(packet);
         size = (int)this.get_packet_size();
         
         byte[] packet_tmp = new byte[size+4];
@@ -270,11 +278,16 @@ public class Proxy extends Thread {
         packet_tmp = null;
         
         try {
-            b = in.read(packet, 3, packet.length-3);
-            if (b == -1) {
-                this.halt();
-                return null;
-            }
+            int offset = 3;
+            int target = packet.length;
+            do {
+                b = in.read(packet, offset, (target - offset));
+                if (b == -1) {
+                    this.halt();
+                    return null;
+                }
+                offset += b;
+            } while (offset != target);
         }
         catch (IOException e) {
             this.logger.fatal("IOException: "+e);
@@ -289,6 +302,7 @@ public class Proxy extends Thread {
         
         for (int i = 0;i < this.buffer.size(); i++) {
             byte[] packet = this.buffer.get(i);
+            this.logger.trace("Writing packet "+i+" size "+packet.length);
             try {
                 out.write(packet);
             }
@@ -306,13 +320,13 @@ public class Proxy extends Thread {
         
         this.offset = 4;
         this.protocolVersion = this.get_fixed_int(1);
-        this.offset += 1; //filler
         this.serverVersion   = this.get_nul_string();
         this.connectionId    = this.get_fixed_int(4);
         this.offset += 8; // challenge-part-1
         this.offset += 1; //filler
         
         this.serverCapabilityFlags = this.get_fixed_int(2);
+        this.logger.trace("Old serverCapabilityFlags: "+this.serverCapabilityFlags);
         
         // Remove Compression and SSL support so we can sniff traffic easily
         
@@ -321,6 +335,8 @@ public class Proxy extends Thread {
         
         if ((this.serverCapabilityFlags & MySQL_Flags.CLIENT_SSL) != 0)
             this.serverCapabilityFlags ^= MySQL_Flags.CLIENT_SSL;
+            
+        this.logger.trace("New serverCapabilityFlags: "+this.serverCapabilityFlags);
         
         this.offset -= 2;
         this.set_fixed_int(2, this.serverCapabilityFlags);
@@ -332,8 +348,10 @@ public class Proxy extends Thread {
     
     public void read_auth_result() {
         this.read_packet(this.mysqlIn);
-        if (this.packetType != MySQL_Flags.OK)
+        if (this.packetType != MySQL_Flags.OK) {
+            this.logger.fatal("Auth is not okay!");
             this.halt();
+        }
         this.write(this.clientOut);
     }
     
@@ -344,13 +362,15 @@ public class Proxy extends Thread {
         this.clientCapabilityFlags = this.get_fixed_int(2);
         
         if ((this.clientCapabilityFlags & MySQL_Flags.CLIENT_PROTOCOL_41) == 0) {
+            this.logger.fatal("We do not support Protocols under 4.1");
             this.halt();
             return;
         }
         
         this.offset = 4;
         this.clientCapabilityFlags = this.get_fixed_int(4);
-        this.offset -= 4;
+        this.logger.trace("Old clientCapabilityFlags: "+this.clientCapabilityFlags);
+        
         // Remove Compression and SSL support so we can sniff traffic easily
         if ((this.clientCapabilityFlags & MySQL_Flags.CLIENT_COMPRESS) != 0)
             this.clientCapabilityFlags ^= MySQL_Flags.CLIENT_COMPRESS;
@@ -367,6 +387,9 @@ public class Proxy extends Thread {
         if ((this.clientCapabilityFlags & MySQL_Flags.CLIENT_PS_MULTI_RESULTS) != 0)
             this.clientCapabilityFlags ^= MySQL_Flags.CLIENT_PS_MULTI_RESULTS;
         
+        this.logger.trace("New clientCapabilityFlags: "+this.clientCapabilityFlags);
+        
+        this.offset -= 4;
         this.set_fixed_int(4, this.clientCapabilityFlags);
     
         this.clientMaxPacketSize = this.get_fixed_int(4);
@@ -395,17 +418,20 @@ public class Proxy extends Thread {
         
         switch (this.packetType) {
             case MySQL_Flags.COM_QUIT:
+                this.logger.info("COM_QUIT");
                 this.halt();
                 break;
             
             // Extract out the new default schema
             case MySQL_Flags.COM_INIT_DB:
+                this.logger.trace("COM_INIT_DB");
                 this.offset = 5;
                 this.schema = this.get_eop_string();
                 break;
             
             // Query
             case MySQL_Flags.COM_QUERY:
+                this.logger.trace("COM_QUERY");
                 this.offset = 5;
                 this.query = this.get_eop_string();
                 break;
@@ -462,6 +488,7 @@ public class Proxy extends Thread {
         int offset = this.offset;
         this.offset = 0;
         size = this.get_fixed_int(3);
+        this.logger.trace("Packet Size "+size);
         this.offset = offset;
         return size;
     }
