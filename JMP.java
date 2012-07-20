@@ -1,3 +1,9 @@
+/*
+ * Java Mysql Proxy
+ * Main binary. Just listen for connections and pass them over
+ * to the proxy module
+ */
+
 import java.io.*;
 import java.net.*;
 import java.util.*;

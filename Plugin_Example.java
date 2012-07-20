@@ -1,3 +1,7 @@
+/*
+ * Example plugin. Just log timing information and hook names
+ */
+
 import java.io.*;
 import java.util.Date;
 

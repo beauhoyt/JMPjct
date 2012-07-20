@@ -1,3 +1,8 @@
+/*
+ * Base proxy code. This should really just move data back and forth
+ * Calling plugins as needed
+ */
+
 import java.net.*;
 import java.io.*;
 import java.util.*;

@@ -1,3 +1,8 @@
+/*
+ * Debug plugin
+ * Output packet debugging information
+ */
+
 import java.io.*;
 import org.apache.commons.io.*;
 

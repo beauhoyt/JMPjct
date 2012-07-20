@@ -1,3 +1,9 @@
+/*
+ * Just a list of important flags that the Proxy code uses.
+ * No need to keep it in the same file, so I broke it out
+ * and put them here
+ */
+
 interface MySQL_Flags {
     public static final int MODE_INIT                           = 0; // Connection opened
     public static final int MODE_READ_HANDSHAKE                 = 1; // Read the handshake from the server, process it, and forward it
