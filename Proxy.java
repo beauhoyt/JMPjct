@@ -534,59 +534,35 @@ public class Proxy extends Thread {
     
     public long get_lenenc_int() {
         byte[] packet = this.buffer.get(this.packet_id);
-        long value = 0;
+        int size = 0;
         
         // 1 byte int
-        if (packet[this.offset] < 251 && packet.length >= (1 + this.offset) ) {
-            value = packet[this.offset];
-            this.offset += 1;
-            value = value & 0xFFL;
-            return value;
+        if (packet[this.offset] < 251) {
+            size = 1;
         }
-            
         // 2 byte int
-        if (packet[this.offset] == 252 && packet.length >= (3 + this.offset) ) {
-            value |= packet[this.offset+2] & 0xFF;
-            value <<= 8;
-            value |= packet[this.offset+1] & 0xFF;
-            
-            this.offset += 3;
-            return value;
+        else if (packet[this.offset] == 252) {
+            this.offset += 1;
+            size = 2;
         }
-        
         // 3 byte int
-        if (packet[this.offset] == 253 && packet.length >= (4 + this.offset) ) {
-            value |= packet[this.offset+3] & 0xFF;
-            value <<= 8;
-            value |= packet[this.offset+2] & 0xFF;
-            value <<= 8;
-            value |= packet[this.offset+1] & 0xFF;
-            
-            this.offset += 4;
-            return value;
+        else if (packet[this.offset] == 253) {
+            this.offset += 1;
+            size = 3;
         }
-        
         // 8 byte int
-        if (packet[this.offset] == 254  && packet.length >= (9 + this.offset) ) {
-            value = (packet[this.offset+5] << 0)
-                  | (packet[this.offset+6] << 8)
-                  | (packet[this.offset+7] << 16)
-                  | (packet[this.offset+8] << 24);
-                  
-            value = value << 32;
-                  
-            value |= (packet[this.offset+1] << 0)
-                  |  (packet[this.offset+2] << 8)
-                  |  (packet[this.offset+3] << 16)
-                  |  (packet[this.offset+4] << 24);
-            
-            this.offset += 9;
-            return value;
+        else if (packet[this.offset] == 254) {
+            this.offset += 1;
+            size = 8;
         }
         
-        this.logger.fatal("Decoding int at offset "+this.offset+" failed!");
-        this.halt();
-        return -1;
+        if (size == 0) {
+            this.logger.fatal("Decoding int at offset "+this.offset+" failed!");
+            this.halt();
+            return -1;
+        }
+        
+        return this.get_fixed_int(size);
     }
 
     public long get_fixed_int(byte[] bytes) {
@@ -672,7 +648,6 @@ public class Proxy extends Thread {
         this.halt();
         return;
     }
-   
     
     public String get_fixed_string(int len) {
         byte[] packet = this.buffer.get(this.packet_id);
