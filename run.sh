@@ -14,6 +14,7 @@ PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug"
 
 CLASSPATH=""
 CLASSPATH="${CLASSPATH}:lib/commons-io-2.4.jar"
+CLASSPATH="${CLASSPATH}:lib/Ehcache/ehcache-core-2.5.2.jar"
 CLASSPATH="${CLASSPATH}:."
 
 set CLASSPATH="${CLASSPATH}"
