@@ -92,7 +92,7 @@ public class Proxy extends Thread {
     }
 
     public void run() {
-        this.logger.info("MODE_INIT");
+        this.logger.trace("MODE_INIT");
         this.mode = MySQL_Flags.MODE_INIT;
         this.nextMode = MySQL_Flags.MODE_READ_HANDSHAKE;
         this.running = 1;
@@ -149,7 +149,7 @@ public class Proxy extends Thread {
         
         this.mode = MySQL_Flags.MODE_CLEANUP;
         this.nextMode = MySQL_Flags.MODE_CLEANUP;
-        this.logger.info("MODE_CLEANUP");
+        this.logger.trace("MODE_CLEANUP");
         this.call_plugins();
         
         this.logger.info("Exiting thread.");
