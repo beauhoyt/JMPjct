@@ -1,7 +1,6 @@
-import java.net.*;
-import java.io.*;
-import java.util.*;
-import org.apache.commons.io.*;
+/*
+ * Basic plugin interface.
+ */
 
 public interface Proxy_Plugin {
     public void init(Proxy context);

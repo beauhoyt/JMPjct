@@ -1,9 +1,7 @@
-import java.net.*;
 import java.io.*;
-import java.util.*;
 import org.apache.commons.io.*;
 
-public class Plugin_Debug implements Proxy_Plugin {
+public class Plugin_Debug extends Plugin_Base {
     public void init(Proxy context) {
         //System.err.print("\nPlugin_Debug->init\n");
         System.err.print("Connected to mysql server at "+context.mysqlHost+":"+context.mysqlPort+"\n\n");

@@ -1,9 +1,7 @@
-import java.net.*;
 import java.io.*;
-import java.util.*;
-import org.apache.commons.io.*;
+import java.util.Date;
 
-public class Plugin_Example implements Proxy_Plugin {
+public class Plugin_Example extends Plugin_Base {
     public void init(Proxy context) {
         Date date = new Date();
         System.err.print("["+date+"]Plugin_Example->init\n");

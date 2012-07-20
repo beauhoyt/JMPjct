@@ -1,15 +1,10 @@
-import java.io.*;
-import net.sf.ehcache.Ehcache;
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Element;
+/*
+ * Create an empty abstract class to allow plugins to only
+ * implement their required differences.
+ */
 
-
-public class Plugin_Ehcache extends Plugin_Base {
-    private Ehcache cache;
-    
+public abstract class Plugin_Base implements Proxy_Plugin {
     public void init(Proxy context) {
-        //this.cache = CacheManager.create();
     }
     
     public void read_handshake(Proxy context) {
@@ -32,4 +27,5 @@ public class Plugin_Ehcache extends Plugin_Base {
     
     public void cleanup(Proxy context) {
     }
+    
 }

@@ -1,7 +1,6 @@
 import java.net.*;
 import java.io.*;
 import java.util.*;
-import org.apache.commons.io.*;
 
 public class Proxy extends Thread {
     
