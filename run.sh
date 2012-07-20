@@ -12,9 +12,13 @@ PROXYOPT="-DmysqlHost=127.0.0.1 -DmysqlPort=3306 -Dport=5050"
 #PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug,Plugin_Example"
 PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug"
 
+# Load up the class path automagically
 CLASSPATH=""
-CLASSPATH="${CLASSPATH}:lib/commons-io-2.4.jar"
-CLASSPATH="${CLASSPATH}:lib/Ehcache/ehcache-core-2.5.2.jar"
+for file in `find lib -name *.jar`
+do
+    CLASSPATH="${CLASSPATH}:${file}"
+done
+
 CLASSPATH="${CLASSPATH}:."
 
 set CLASSPATH="${CLASSPATH}"
