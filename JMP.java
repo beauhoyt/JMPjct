@@ -8,6 +8,8 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.net.ServerSocket;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 
 public class JMP {
     public static void main(String[] args) throws IOException {
@@ -18,11 +20,14 @@ public class JMP {
         ServerSocket listener = null;
         ArrayList<Proxy_Plugin> plugins = new ArrayList<Proxy_Plugin>();
         
+        Logger logger = Logger.getLogger("JMP");
+        PropertyConfigurator.configure(System.getProperty("logConf"));
+        
         try {
             listener = new ServerSocket(port);
         }
         catch (IOException e) {
-            System.err.print("Could not listen on port\n");
+            logger.fatal("Could not listen on port\n");
             System.exit(-1);
         }
         
@@ -32,18 +37,18 @@ public class JMP {
             for (String p: ps) {
                 try {
                     plugins.add((Proxy_Plugin) Proxy_Plugin.class.getClassLoader().loadClass(p).newInstance());
-                    System.err.print("Loaded plugin "+p+"\n");
+                    logger.info("Loaded plugin "+p+"\n");
                 }
                 catch (java.lang.ClassNotFoundException e) {
-                    System.err.print("Failed to load plugin "+p+"\n");
+                    logger.error("Failed to load plugin "+p+"\n");
                     continue;
                 }
                 catch (java.lang.InstantiationException e) {
-                    System.err.print("Failed to load plugin "+p+"\n");
+                    logger.error("Failed to load plugin "+p+"\n");
                     continue;
                 }
                 catch (java.lang.IllegalAccessException e) {
-                    System.err.print("Failed to load plugin "+p+"\n");
+                    logger.error("Failed to load plugin "+p+"\n");
                     continue;
                 }
             }

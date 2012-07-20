@@ -1,8 +1,11 @@
 /*
  * Basic plugin interface.
  */
+import org.apache.log4j.Logger;
 
 public interface Proxy_Plugin {
+    public Logger logger =  Logger.getLogger("Plugin");
+    
     public void init(Proxy context);
     public void read_handshake(Proxy context);
     public void read_auth(Proxy context);

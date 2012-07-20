@@ -1,9 +1,9 @@
 import java.io.*;
+import org.apache.log4j.Logger;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
-
 
 public class Plugin_Ehcache extends Plugin_Base {
     private Ehcache cache;

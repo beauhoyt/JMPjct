@@ -6,8 +6,14 @@ set -o pipefail
 
 JAVAOPT="-Xmx4096m"
 
+PROXYOPT=""
+
 # Connection options
-PROXYOPT="-DmysqlHost=127.0.0.1 -DmysqlPort=3306 -Dport=5050"
+PROXYOPT="${PROXYOPT} -DmysqlHost=127.0.0.1 -DmysqlPort=3306 -Dport=5050"
+
+# Logging Config File
+PROXYOPT="${PROXYOPT} -DlogConf=log.conf"
+
 # Plugins
 #PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug,Plugin_Example"
 PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug"

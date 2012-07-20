@@ -2,8 +2,11 @@
  * Create an empty abstract class to allow plugins to only
  * implement their required differences.
  */
+import org.apache.log4j.Logger;
 
 public abstract class Plugin_Base implements Proxy_Plugin {
+    public Logger logger = Logger.getLogger("Plugin.Base");
+    
     public void init(Proxy context) {
         return;
     }
