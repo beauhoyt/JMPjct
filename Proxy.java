@@ -100,37 +100,37 @@ public class Proxy extends Thread {
             
             switch (this.mode) {
                 case MySQL_Flags.MODE_READ_HANDSHAKE:
-                    this.logger.info("MODE_READ_HANDSHAKE");
+                    this.logger.trace("MODE_READ_HANDSHAKE");
                     this.nextMode = MySQL_Flags.MODE_READ_AUTH;
                     this.read_handshake();
                     break;
                 
                 case MySQL_Flags.MODE_READ_AUTH:
-                    this.logger.info("MODE_READ_AUTH");
+                    this.logger.trace("MODE_READ_AUTH");
                     this.nextMode = MySQL_Flags.MODE_READ_AUTH_RESULT;
                     this.read_auth();
                     break;
                 
                 case MySQL_Flags.MODE_READ_AUTH_RESULT:
-                    this.logger.info("MODE_READ_AUTH_RESULT");
+                    this.logger.trace("MODE_READ_AUTH_RESULT");
                     this.nextMode = MySQL_Flags.MODE_READ_QUERY;
                     this.read_auth_result();
                     break;
                 
                 case MySQL_Flags.MODE_READ_QUERY:
-                    this.logger.info("MODE_READ_QUERY");
+                    this.logger.trace("MODE_READ_QUERY");
                     this.nextMode = MySQL_Flags.MODE_READ_QUERY_RESULT;
                     this.read_query();
                     break;
                 
                 case MySQL_Flags.MODE_READ_QUERY_RESULT:
-                    this.logger.info("MODE_READ_QUERY_RESULT");
+                    this.logger.trace("MODE_READ_QUERY_RESULT");
                     this.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
                     this.read_query_result();
                     break;
                 
                 case MySQL_Flags.MODE_SEND_QUERY_RESULT:
-                    this.logger.info("MODE_SEND_QUERY_RESULT");
+                    this.logger.trace("MODE_SEND_QUERY_RESULT");
                     this.nextMode = MySQL_Flags.MODE_READ_QUERY;
                     this.send_query_result();
                     break;
