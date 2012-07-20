@@ -6,6 +6,7 @@ import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
 
 public class Plugin_Ehcache extends Plugin_Base {
+    public Logger logger = Logger.getLogger("Plugin.Ehcache");
     private Ehcache cache;
     
     public void init(Proxy context) {
