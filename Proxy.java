@@ -418,7 +418,7 @@ public class Proxy extends Thread {
         
         switch (this.packetType) {
             case MySQL_Flags.COM_QUIT:
-                this.logger.info("COM_QUIT");
+                this.logger.trace("COM_QUIT");
                 this.halt();
                 break;
             

@@ -38,17 +38,17 @@ public class Plugin_Debug extends Plugin_Base {
     public void read_query(Proxy context) {
         switch (context.packetType) {
             case MySQL_Flags.COM_QUIT:
-                this.logger.debug("-> COM_QUIT");
+                this.logger.info("-> COM_QUIT");
                 break;
             
             // Extract out the new default schema
             case MySQL_Flags.COM_INIT_DB:
-                this.logger.debug("-> USE "+context.schema);
+                this.logger.info("-> USE "+context.schema);
                 break;
             
             // Query
             case MySQL_Flags.COM_QUERY:
-                this.logger.debug("-> "+context.query);
+                this.logger.info("-> "+context.query);
                 break;
             
             default:
@@ -62,7 +62,7 @@ public class Plugin_Debug extends Plugin_Base {
     public void read_query_result(Proxy context) {
         switch (context.packetType) {
             case MySQL_Flags.OK:
-                this.logger.debug("<- OK");
+                this.logger.info("<- OK");
                 if (context.affectedRows > 0)
                     this.logger.debug("   Affected rows: "+context.affectedRows);
                 if (context.lastInsertId > 0)
@@ -75,7 +75,7 @@ public class Plugin_Debug extends Plugin_Base {
                 break;
             
             case MySQL_Flags.ERR:
-                this.logger.debug("<- ERR");
+                this.logger.info("<- ERR");
                 break;
             
             default:
