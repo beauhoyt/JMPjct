@@ -220,6 +220,7 @@ public class Proxy extends Thread {
                 this.halt();
                 return;
             }
+            this.logger.trace("Reading Column "+this.buffer.size());
         }
         
         do {
@@ -228,9 +229,8 @@ public class Proxy extends Thread {
                 this.halt();
                 return;
             }
-            this.logger.debug("Reading Row "+this.buffer.size()+"\r");
+            this.logger.trace("Reading Row "+this.buffer.size());
         } while (packet[4] != MySQL_Flags.EOF);
-        this.logger.debug("");
         
         // Do we have more results?
         this.offset=7;
