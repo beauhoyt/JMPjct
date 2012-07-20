@@ -553,92 +553,13 @@ public class Proxy extends Thread {
     public long get_fixed_int(byte[] bytes) {
         long value = 0;
         
-        // 1 byte int
-        if (bytes.length == 1) {
-            value = bytes[0];
-            value = value & 0xFFL;
-            
-            return value;
+        for (int i = bytes.length-1; i > 0; i--) {
+            value |= bytes[i] & 0xFF;
+            value <<= 8;
         }
-            
-        // 2 byte int
-        if (bytes.length == 2) {
-            value |= bytes[1] & 0xFF;
-            value <<= 8;
-            value |= bytes[0] & 0xFF;
-            
-            return value;
-        }
-        
-        // 3 byte int
-        if (bytes.length == 3) {
-            value |= bytes[2] & 0xFF;
-            value <<= 8;
-            value |= bytes[1] & 0xFF;
-            value <<= 8;
-            value |= bytes[0] & 0xFF;
-            
-            return value;
-        }
-        
-        // 4 byte int
-        if (bytes.length == 4) {
-            value |= bytes[3] & 0xFF;
-            value <<= 8;
-            value |= bytes[2] & 0xFF;
-            value <<= 8;
-            value |= bytes[1] & 0xFF;
-            value <<= 8;
-            value |= bytes[0] & 0xFF;
-                 
-            return value;
-        }
-        
-        // 8 byte int
-        if (bytes.length == 8) {
-            value = (bytes[4] << 0)
-                  | (bytes[5] << 8)
-                  | (bytes[6] << 16)
-                  | (bytes[7] << 24);
+        value |= bytes[0] & 0xFF;
                   
-            value = value << 32;
-                  
-            value |= (bytes[0] << 0)
-                  |  (bytes[1] << 8)
-                  |  (bytes[2] << 16)
-                  |  (bytes[3] << 24);
-                  
-            if (bytes[7] != 0x00) {
-                value = value & 0xFFFFFFFFFFFFFFFFL;
-            }
-            else if (bytes[6] != 0x00) {
-                value = value & 0xFFFFFFFFFFFFFFL;
-            }
-            else if (bytes[5] != 0x00) {
-                value = value & 0xFFFFFFFFFFFFL;
-            }
-            else if (bytes[4] != 0x00) {
-                value = value & 0xFFFFFFFFFFL;
-            }
-            else if (bytes[3] != 0x00) {
-                value = value & 0xFFFFFFFFL;
-            }
-            else if (bytes[2] != 0x00) {
-                value = value & 0xFFFFFFL;
-            }
-            else if (bytes[1] != 0x00) {
-                value = value & 0xFFFFL;
-            }
-            else {
-                value = value & 0xFFL;
-            } 
-                  
-            return value;
-        }
-        
-        this.logger.fatal("Decoding int failed!");
-        this.halt();
-        return -1;
+        return value;
     }
     
     public long get_fixed_int(int size) {
