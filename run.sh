@@ -16,13 +16,13 @@ PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug"
 CLASSPATH=""
 for file in `find lib -name *.jar`
 do
-    CLASSPATH="${CLASSPATH}:${file}"
+    CLASSPATH="${CLASSPATH}${file}:"
 done
 
-CLASSPATH="${CLASSPATH}:."
+CLASSPATH="${CLASSPATH}."
 
 set CLASSPATH="${CLASSPATH}"
 export CLASSPATH="${CLASSPATH}"
 
-javac -classpath "${CLASSPATH}" *.java
+javac -classpath "${CLASSPATH}" `find . -name \*.java | tr \\\n " "`
 java ${JAVAOPT} -classpath "${CLASSPATH}" ${PROXYOPT} JMP
