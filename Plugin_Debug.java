@@ -93,11 +93,14 @@ public class Plugin_Debug extends Plugin_Base {
     
     public static final void dump_packet(byte[] packet) {
         try {
-                HexDump.dump(packet, 0, java.lang.System.err, 0);
-            }
-            catch (IOException e) {
-                return;
-            }
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            HexDump.dump(packet, 0, out, 0);
+            Logger logger = Logger.getLogger("Plugin.Debug");
+            logger.trace("Dumping packet\n"+out.toString());
+        }
+        catch (IOException e) {
+            return;
+        }
     }
     
     public static final String dump_capability_flags(long capabilityFlags) {
