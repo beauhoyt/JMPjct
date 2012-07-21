@@ -53,7 +53,6 @@ public class Proxy extends Thread {
     public long connectionId = 0;
     public long capabilityFlags = 0;
     public long characterSet = 0;
-    public long serverCapabilityFlagsOffset = 0;
     public long serverCapabilityFlags = 0;
     public long serverCharacterSet = 0;
     public long clientCapabilityFlags = 0;
