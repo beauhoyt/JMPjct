@@ -12,7 +12,6 @@ public class Plugin_Debug extends Plugin_Base {
     
     public void init(Proxy context) {
         this.logger.info("Connected to mysql server at "+context.mysqlHost+":"+context.mysqlPort);
-        return;
     }
     
     public void read_handshake(Proxy context) {
@@ -21,7 +20,6 @@ public class Plugin_Debug extends Plugin_Base {
         this.logger.debug("   Connection Id: "+context.connectionId);
         this.logger.debug("   Server Capability Flags: "
                           + Plugin_Debug.dump_capability_flags(context.serverCapabilityFlags));
-        return;
     }
     
     public void read_auth(Proxy context) {
@@ -32,7 +30,6 @@ public class Plugin_Debug extends Plugin_Base {
         
         this.logger.debug("   Client Capability Flags: "
                           + Plugin_Debug.dump_capability_flags(context.clientCapabilityFlags));
-        return;
     }
     
     public void read_query(Proxy context) {
@@ -56,7 +53,6 @@ public class Plugin_Debug extends Plugin_Base {
                 Plugin_Debug.dump_buffer(context);
                 break;
         }
-        return;
     }
     
     public void read_query_result(Proxy context) {
@@ -82,7 +78,6 @@ public class Plugin_Debug extends Plugin_Base {
                 this.logger.debug("Result set or Packet is "+context.packetType+" type.");
                 break;
         }
-        return;
     }
     
     public static final void dump_buffer(Proxy context) {
