@@ -80,8 +80,17 @@ public class Plugin_Ehcache extends Plugin_Base {
             }
         }
         else if (command.equals("FLUSH")) {
-            Plugin_Ehcache.cache.remove(this.key);
-            this.TTL = 0;
+            MySQL_OK ok = new MySQL_OK();
+            
+            boolean removed = Plugin_Ehcache.cache.remove(this.key);
+            if (removed)
+                ok.affectedRows = 1;
+            ok.sequenceId = context.sequenceId+1;
+            
+            context.clear_buffer();
+            context.buffer.add(ok.toPacket());
+            Plugin_Debug.dump_buffer(context);
+            context.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
         }
         else if (command.equals("REFRESH")) {
             Plugin_Ehcache.cache.remove(this.key);
