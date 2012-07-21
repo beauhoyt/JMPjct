@@ -5,6 +5,7 @@ set -o nounset
 set -o pipefail
 
 JAVAOPT="-Xmx4096m"
+JAVACOPT="-Xlint:unchecked"
 
 PROXYOPT=""
 CLASSPATH=""
@@ -19,6 +20,9 @@ PROXYOPT="${PROXYOPT} -DlogConf=conf/log.conf"
 #PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug,Plugin_Example"
 #PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug"
 PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug,Plugin_Ehcache"
+
+# Ehcache for OS X. Disable on linux
+# PROXYOPT="${PROXYOPT} -Dnet.sf.ehcache.pool.sizeof.AgentSizeOf.bypass=true"
 
 # Core components
 CLASSPATH="${CLASSPATH}:core"
@@ -45,7 +49,7 @@ set CLASSPATH="${CLASSPATH}"
 export CLASSPATH="${CLASSPATH}"
 
 # Compile
-javac -classpath "${CLASSPATH}" `find . -name \*.java | tr \\\n " "`
+javac ${JAVACOPT} -classpath "${CLASSPATH}" `find . -name \*.java | tr \\\n " "`
 
 # Run
 java ${JAVAOPT} -classpath "${CLASSPATH}" ${PROXYOPT} JMP

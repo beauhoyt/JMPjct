@@ -58,10 +58,11 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
          dynamicConfig="true" maxBytesLocalHeap="400M" maxBytesLocalOffHeap="2G">
 
 -->
-<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<ehcache name="Plugin_Ehcache"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="ehcache.xsd"
-         updateCheck="true" monitoring="autodetect"
-         dynamicConfig="true">
+         updateCheck="false" monitoring="autodetect"
+         dynamicConfig="false">
 
     <!--
     DiskStore configuration
@@ -199,7 +200,10 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
 
     For more information on the Terracotta configuration, see the Terracotta documentation.
     -->
+    
+    <!--
     <terracottaConfig url="localhost:9510"/>
+    -->
 
     <!--
     Cache configuration
@@ -661,6 +665,8 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
 
     The defaultCache has an implicit name "default" which is a reserved cache name.
     -->
+    
+    <!--
     <defaultCache
            maxEntriesLocalHeap="0"
            eternal="false"
@@ -669,7 +675,8 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
            timeToLiveSeconds="1200">
       <terracotta/>
     </defaultCache>
-
+    -->
+    
     <!--
     Sample caches. Following are some example caches. Remove these before use.
     -->
@@ -684,6 +691,8 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
     disk cache, which in this configuration will go to wherever java.io.tmp is
     defined on your system. On a standard Linux system this will be /tmp"
     -->
+    
+    <!--
     <cache name="sampleCache1"
            maxEntriesLocalHeap="10000"
            maxEntriesLocalDisk="1000"
@@ -695,7 +704,7 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
            memoryStoreEvictionPolicy="LFU"
            transactionalMode="off"
             />
-
+    -->
 
     <!--
     Sample cache named sampleCache2
@@ -703,19 +712,23 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
     is also the maximum cache size. Note that when a cache is eternal, timeToLive and
     timeToIdle are not used and do not need to be specified.
     -->
+    
+    <!--
     <cache name="sampleCache2"
            maxEntriesLocalHeap="1000"
            eternal="true"
            overflowToDisk="false"
            memoryStoreEvictionPolicy="FIFO"
             />
-
+    -->
 
     <!--
     Sample cache named sampleCache3. This cache overflows to disk. The disk store is
     persistent between cache and VM restarts. The disk expiry thread interval is set to 10
     minutes, overriding the default of 2 minutes.
     -->
+    
+    <!--
     <cache name="sampleCache3"
            maxEntriesLocalHeap="500"
            eternal="false"
@@ -726,11 +739,14 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
            diskExpiryThreadIntervalSeconds="1"
            memoryStoreEvictionPolicy="LFU"
             />
+    -->
 
     <!--
     Sample Terracotta clustered cache named sampleTerracottaCache.
     This cache uses Terracotta to cluster the contents of the cache.
     -->
+    
+    <!--
     <cache name="sampleTerracottaCache"
            maxBytesLocalHeap="10m"
            eternal="false"
@@ -739,6 +755,7 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
            overflowToDisk="false">
         <terracotta/>
     </cache>
+    -->
 
     <!--
       Sample xa enabled cache named xaCache
@@ -784,4 +801,23 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
            diskExpiryThreadIntervalSeconds="1"
      </cache>
 -->
+
+    <defaultCache
+           maxBytesLocalHeap="512m"
+           eternal="true"
+           overflowToDisk="false"
+           memoryStoreEvictionPolicy="FIFO"
+           >
+        <sizeOfPolicy maxDepth="100000" maxDepthExceededBehavior="continue"/>
+    </defaultCache>
+
+    <cache name="127.0.0.1:3306"
+           maxBytesLocalHeap="512m"
+           eternal="true"
+           overflowToDisk="false"
+           memoryStoreEvictionPolicy="FIFO"
+           >
+        <sizeOfPolicy maxDepth="100000" maxDepthExceededBehavior="continue"/>
+    </cache>
+
 </ehcache>

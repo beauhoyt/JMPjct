@@ -61,7 +61,7 @@ public class Proxy extends Thread {
     public long clientMaxPacketSize = 0;
     
     // Buffer or directly pass though the data
-    public boolean bufferResultSet = true;
+    public boolean bufferResultSet = false;
     
     // Modes
     public int mode = 0;
@@ -209,7 +209,11 @@ public class Proxy extends Thread {
         this.logger.trace("Clearing Buffer.");
         this.offset = 0;
         this.packet_id = 0;
-        this.buffer.clear();
+        
+        // With how ehcache works, if we clear the buffer via .clear(), it also
+        // clears the cached value. Create a new ArrayList and count on java
+        // cleaning up after ourselves.
+        this.buffer = new ArrayList<byte[]>();
     }
     
     public void read_full_result_set(InputStream in) {
