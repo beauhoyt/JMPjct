@@ -21,6 +21,10 @@ PROXYOPT="${PROXYOPT} -DlogConf=conf/log.conf"
 #PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug"
 PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug,Plugin_Ehcache"
 
+# Ehcache
+PROXYOPT="${PROXYOPT} -DehcacheConf=conf/ehcache.xml"
+PROXYOPT="${PROXYOPT} -DehcacheCacheName=127.0.0.1:3306"
+
 # Ehcache for OS X. Disable on linux
 # PROXYOPT="${PROXYOPT} -Dnet.sf.ehcache.pool.sizeof.AgentSizeOf.bypass=true"
 

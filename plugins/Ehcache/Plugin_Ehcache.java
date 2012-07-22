@@ -13,19 +13,22 @@ public class Plugin_Ehcache extends Plugin_Base {
     private String key = "";
     
     public void init(Proxy context) {
-        // Key off of the remote mysql host
-        String cacheName = context.mysqlHost+":"+context.mysqlPort;
-        
+        // Bail out early if we have a cache
+        if (Plugin_Ehcache.cache != null)
+            return;
+            
         if (Plugin_Ehcache.cachemanager == null) {
-            Plugin_Ehcache.cachemanager = CacheManager.create("conf/ehcache.xml");
+            this.logger.trace("Ehcache - CacheManager: Loading "+System.getProperty("ehcacheConf"));
+            Plugin_Ehcache.cachemanager = CacheManager.create(System.getProperty("ehcacheConf"));
         }
         
         if (Plugin_Ehcache.cache == null) {
-            Plugin_Ehcache.cache = Plugin_Ehcache.cachemanager.getEhcache(cacheName);
+            this.logger.trace("Ehcache - cache: Getting "+System.getProperty("ehcacheCacheName"));
+            Plugin_Ehcache.cache = Plugin_Ehcache.cachemanager.getEhcache(System.getProperty("ehcacheCacheName"));
         }
         
         if (Plugin_Ehcache.cache == null) {
-            this.logger.fatal("Ehcache is null! Does instance '"+cacheName+"' exist?");
+            this.logger.fatal("Ehcache is null! Does instance '"+System.getProperty("ehcacheCacheName")+"' exist?");
             context.halt();
         }
     }
@@ -53,7 +56,7 @@ public class Plugin_Ehcache extends Plugin_Base {
         }
         
         query = query.substring(query.indexOf("*/")+2).trim();
-        this.key = context.schema+":"+query;
+        this.key = context.mysqlHost+":"+context.mysqlPort+"/"+context.schema+"/"+query;
         
         this.logger.info("Cache Key: '"+this.key+"'");
         this.logger.trace("Command: '"+command+"'"+" value: '"+value+"'");
