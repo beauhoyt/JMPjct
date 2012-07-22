@@ -183,7 +183,9 @@ public class Proxy extends Thread {
     }
     
     public void call_plugins() {
-        for (Proxy_Plugin plugin : this.plugins) {
+        int pluginCount = this.plugins.size();
+        for (int i = 0; i < pluginCount; i++) {
+            Proxy_Plugin plugin = this.plugins.get(i);
             switch (this.mode) {
                 case MySQL_Flags.MODE_INIT:
                     plugin.init(this);
