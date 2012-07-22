@@ -92,72 +92,87 @@ public class Proxy extends Thread {
     }
 
     public void run() {
-        this.logger.trace("MODE_INIT");
-        this.mode = MySQL_Flags.MODE_INIT;
-        this.nextMode = MySQL_Flags.MODE_READ_HANDSHAKE;
-        this.call_plugins();
-        this.mode = this.nextMode;
-
-        while (this.running == 1) {
-            
-            switch (this.mode) {
-                case MySQL_Flags.MODE_READ_HANDSHAKE:
-                    this.logger.trace("MODE_READ_HANDSHAKE");
-                    this.nextMode = MySQL_Flags.MODE_READ_AUTH;
-                    this.read_handshake();
-                    break;
-                
-                case MySQL_Flags.MODE_READ_AUTH:
-                    this.logger.trace("MODE_READ_AUTH");
-                    this.nextMode = MySQL_Flags.MODE_READ_AUTH_RESULT;
-                    this.read_auth();
-                    break;
-                
-                case MySQL_Flags.MODE_READ_AUTH_RESULT:
-                    this.logger.trace("MODE_READ_AUTH_RESULT");
-                    this.nextMode = MySQL_Flags.MODE_READ_QUERY;
-                    this.read_auth_result();
-                    break;
-                
-                case MySQL_Flags.MODE_READ_QUERY:
-                    this.logger.trace("MODE_READ_QUERY");
-                    this.nextMode = MySQL_Flags.MODE_SEND_QUERY;
-                    this.read_query();
-                    break;
-                
-                case MySQL_Flags.MODE_SEND_QUERY:
-                    this.logger.trace("MODE_SEND_QUERY");
-                    this.nextMode = MySQL_Flags.MODE_READ_QUERY_RESULT;
-                    this.send_query();
-                    break;
-                
-                case MySQL_Flags.MODE_READ_QUERY_RESULT:
-                    this.logger.trace("MODE_READ_QUERY_RESULT");
-                    this.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
-                    this.read_query_result();
-                    break;
-                
-                case MySQL_Flags.MODE_SEND_QUERY_RESULT:
-                    this.logger.trace("MODE_SEND_QUERY_RESULT");
-                    this.nextMode = MySQL_Flags.MODE_READ_QUERY;
-                    this.send_query_result();
-                    break;
-                
-                default:
-                    this.logger.fatal("UNKNOWN MODE "+this.mode);
-                    this.halt();
-                    break;
-            }
+        try {
+            this.logger.trace("MODE_INIT");
+            this.mode = MySQL_Flags.MODE_INIT;
+            this.nextMode = MySQL_Flags.MODE_READ_HANDSHAKE;
             this.call_plugins();
             this.mode = this.nextMode;
+    
+            while (this.running == 1) {
+                
+                switch (this.mode) {
+                    case MySQL_Flags.MODE_READ_HANDSHAKE:
+                        this.logger.trace("MODE_READ_HANDSHAKE");
+                        this.nextMode = MySQL_Flags.MODE_READ_AUTH;
+                        this.read_handshake();
+                        break;
+                    
+                    case MySQL_Flags.MODE_READ_AUTH:
+                        this.logger.trace("MODE_READ_AUTH");
+                        this.nextMode = MySQL_Flags.MODE_READ_AUTH_RESULT;
+                        this.read_auth();
+                        break;
+                    
+                    case MySQL_Flags.MODE_READ_AUTH_RESULT:
+                        this.logger.trace("MODE_READ_AUTH_RESULT");
+                        this.nextMode = MySQL_Flags.MODE_READ_QUERY;
+                        this.read_auth_result();
+                        break;
+                    
+                    case MySQL_Flags.MODE_READ_QUERY:
+                        this.logger.trace("MODE_READ_QUERY");
+                        this.nextMode = MySQL_Flags.MODE_SEND_QUERY;
+                        this.read_query();
+                        break;
+                    
+                    case MySQL_Flags.MODE_SEND_QUERY:
+                        this.logger.trace("MODE_SEND_QUERY");
+                        this.nextMode = MySQL_Flags.MODE_READ_QUERY_RESULT;
+                        this.send_query();
+                        break;
+                    
+                    case MySQL_Flags.MODE_READ_QUERY_RESULT:
+                        this.logger.trace("MODE_READ_QUERY_RESULT");
+                        this.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
+                        this.read_query_result();
+                        break;
+                    
+                    case MySQL_Flags.MODE_SEND_QUERY_RESULT:
+                        this.logger.trace("MODE_SEND_QUERY_RESULT");
+                        this.nextMode = MySQL_Flags.MODE_READ_QUERY;
+                        this.send_query_result();
+                        break;
+                    
+                    default:
+                        this.logger.fatal("UNKNOWN MODE "+this.mode);
+                        this.halt();
+                        break;
+                }
+                this.call_plugins();
+                this.mode = this.nextMode;
+            }
+            
+            this.mode = MySQL_Flags.MODE_CLEANUP;
+            this.nextMode = MySQL_Flags.MODE_CLEANUP;
+            this.logger.trace("MODE_CLEANUP");
+            this.call_plugins();
+            
+            try {
+                this.mysqlSocket.close();
+            }
+            catch (IOException e) {
+            }
+            
+            this.logger.info("Exiting thread.");
         }
-        
-        this.mode = MySQL_Flags.MODE_CLEANUP;
-        this.nextMode = MySQL_Flags.MODE_CLEANUP;
-        this.logger.trace("MODE_CLEANUP");
-        this.call_plugins();
-        
-        this.logger.info("Exiting thread.");
+        finally {
+            try {
+                this.mysqlSocket.close();
+            }
+            catch (IOException e) {
+            }
+        }
     }
     
     public void halt() {
