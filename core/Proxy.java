@@ -121,8 +121,14 @@ public class Proxy extends Thread {
                 
                 case MySQL_Flags.MODE_READ_QUERY:
                     this.logger.trace("MODE_READ_QUERY");
-                    this.nextMode = MySQL_Flags.MODE_READ_QUERY_RESULT;
+                    this.nextMode = MySQL_Flags.MODE_SEND_QUERY;
                     this.read_query();
+                    break;
+                
+                case MySQL_Flags.MODE_SEND_QUERY:
+                    this.logger.trace("MODE_SEND_QUERY");
+                    this.nextMode = MySQL_Flags.MODE_READ_QUERY_RESULT;
+                    this.send_query();
                     break;
                 
                 case MySQL_Flags.MODE_READ_QUERY_RESULT:
@@ -185,6 +191,10 @@ public class Proxy extends Thread {
                     plugin.read_query(this);
                     break;
                 
+                case MySQL_Flags.MODE_SEND_QUERY:
+                    plugin.send_query(this);
+                    break;
+                
                 case MySQL_Flags.MODE_READ_QUERY_RESULT:
                     plugin.read_query_result(this);
                     break;
@@ -217,6 +227,7 @@ public class Proxy extends Thread {
     }
     
     public void read_full_result_set(InputStream in) {
+        this.logger.trace("read_full_result_set");
         // Assume we have the start of a result set already
         this.offset = 4;
         long colCount = this.get_lenenc_int();
@@ -249,6 +260,7 @@ public class Proxy extends Thread {
     }
     
     public void proxy_result_set(InputStream in) {
+        this.logger.trace("proxy_result_set");
         // Assume we have the start of a result set already
         this.offset = 4;
         long colCount = this.get_lenenc_int();
@@ -284,6 +296,7 @@ public class Proxy extends Thread {
     }
     
     public byte[] read_packet(InputStream in) {
+        this.logger.trace("read_packet");
         int b = 0;
         int size = 0;
         byte[] packet = new byte[3];
@@ -338,6 +351,8 @@ public class Proxy extends Thread {
     }
     
     public void write(OutputStream out) {
+        this.logger.trace("write");
+        //Plugin_Debug.dump_buffer(this);
         
         for (int i = 0; i < this.buffer.size(); i++) {
             byte[] packet = this.buffer.get(i);
@@ -355,6 +370,7 @@ public class Proxy extends Thread {
     }
     
     public void read_handshake() {
+        this.logger.trace("read_handshake");
         this.read_packet(this.mysqlIn);
         
         this.offset = 4;
@@ -387,6 +403,7 @@ public class Proxy extends Thread {
     }
     
     public void read_auth_result() {
+        this.logger.trace("read_auth_result");
         this.read_packet(this.mysqlIn);
         if (this.packetType != MySQL_Flags.OK) {
             this.logger.fatal("Auth is not okay!");
@@ -396,6 +413,7 @@ public class Proxy extends Thread {
     }
     
     public void read_auth() {
+        this.logger.trace("read_auth");
         this.read_packet(this.clientIn);
         
         this.offset = 4;
@@ -449,12 +467,12 @@ public class Proxy extends Thread {
     }
     
     public void read_query() {
-        if (this.mode < MySQL_Flags.MODE_READ_AUTH_RESULT)
-            return;
+        this.logger.trace("read_query");
         
         byte[] packet = this.read_packet(this.clientIn);
         this.packetType = packet[4];
         this.sequenceId = packet[3];
+        this.logger.trace("Client sequenceId: "+this.sequenceId);
         
         switch (this.packetType) {
             case MySQL_Flags.COM_QUIT:
@@ -479,13 +497,15 @@ public class Proxy extends Thread {
             default:
                 break;
         }
-        
+    }
+    
+    public void send_query(){
+        this.logger.trace("send_query");
         this.write(this.mysqlOut);
     }
     
     public void read_query_result() {
-        if (this.mode < MySQL_Flags.MODE_READ_AUTH_RESULT)
-            return;
+        this.logger.trace("read_query_result");
         
         byte[] packet = this.read_packet(this.mysqlIn);
         this.buffer.get(this.packet_id);
@@ -523,10 +543,12 @@ public class Proxy extends Thread {
     }
     
     public void send_query_result(){
+        this.logger.trace("send_query_result");
         this.write(this.clientOut);
     }
     
     public long get_packet_size() {
+        this.logger.trace("get_packet_size");
         long size = 0;
         int offset = this.offset;
         this.offset = 0;

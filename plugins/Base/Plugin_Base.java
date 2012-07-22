@@ -27,6 +27,10 @@ public abstract class Plugin_Base implements Proxy_Plugin {
         return;
     }
     
+    public void send_query(Proxy context) {
+        return;
+    }
+    
     public void read_query_result(Proxy context) {
         return;
     }

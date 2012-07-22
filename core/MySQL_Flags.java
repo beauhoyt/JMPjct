@@ -9,10 +9,11 @@ interface MySQL_Flags {
     public static final int MODE_READ_HANDSHAKE                 = 1; // Read the handshake from the server, process it, and forward it
     public static final int MODE_READ_AUTH                      = 2; // Read the reply from the client, process it, and forward it
     public static final int MODE_READ_AUTH_RESULT               = 3; // Read the reply from the server, process it and forward it
-    public static final int MODE_READ_QUERY                     = 4; // Read the query from the client, process it, and forward
-    public static final int MODE_READ_QUERY_RESULT              = 5; // Read the result set from the server, and process it
-    public static final int MODE_SEND_QUERY_RESULT              = 6; // Send a result set to the client
-    public static final int MODE_CLEANUP                        = 7; // Connection closed
+    public static final int MODE_READ_QUERY                     = 4; // Read the query from the client, process it
+    public static final int MODE_SEND_QUERY                     = 5; // Send the query to the server
+    public static final int MODE_READ_QUERY_RESULT              = 6; // Read the result set from the server, and process it
+    public static final int MODE_SEND_QUERY_RESULT              = 7; // Send a result set to the client
+    public static final int MODE_CLEANUP                        = 8; // Connection closed
     
     // Packet types
     public static final byte COM_QUIT                           = (byte)0x01;
