@@ -6,55 +6,37 @@
 
 import java.io.*;
 import java.util.*;
-import java.net.ServerSocket;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
 public class JMP {
     public static void main(String[] args) throws IOException {
-        String mysqlHost = System.getProperty("mysqlHost");
-        int mysqlPort = Integer.parseInt(System.getProperty("mysqlPort"));
-        int port = Integer.parseInt(System.getProperty("port"));
-        boolean listening = true;
-        ServerSocket listener = null;
-        ArrayList<Proxy_Plugin> plugins = new ArrayList<Proxy_Plugin>();
+        ArrayList<JMP_Thread> threads = new ArrayList<JMP_Thread>();
         
         Logger logger = Logger.getLogger("JMP");
         PropertyConfigurator.configure(System.getProperty("logConf"));
         
-        try {
-            listener = new ServerSocket(port);
-        }
-        catch (IOException e) {
-            logger.fatal("Could not listen on port "+port);
-            System.exit(-1);
+        String[] hosts = System.getProperty("Hosts").split(",");
+        for (String host: hosts) {
+            String[] hostInfo = host.split(":");
+            
+            int port = Integer.parseInt(hostInfo[0]);
+            String mysqlHost = hostInfo[1];
+            int mysqlPort = Integer.parseInt(hostInfo[2]);
+            
+            JMP_Thread thread = new JMP_Thread(port, mysqlHost, mysqlPort);
+            thread.setName("Listener: "+port);
+            thread.start();
+            threads.add(thread);
         }
         
-        String[] ps = System.getProperty("plugins").split(",");
-        
-        while (listening) {
-            plugins = new ArrayList<Proxy_Plugin>();
-            for (String p: ps) {
-                try {
-                    plugins.add((Proxy_Plugin) Proxy_Plugin.class.getClassLoader().loadClass(p).newInstance());
-                    logger.info("Loaded plugin "+p);
-                }
-                catch (java.lang.ClassNotFoundException e) {
-                    logger.error("Failed to load plugin "+p);
-                    continue;
-                }
-                catch (java.lang.InstantiationException e) {
-                    logger.error("Failed to load plugin "+p);
-                    continue;
-                }
-                catch (java.lang.IllegalAccessException e) {
-                    logger.error("Failed to load plugin "+p);
-                    continue;
-                }
+        // Wait for all the threads now
+        for (JMP_Thread thread : threads) {
+            try {
+                thread.join();
             }
-            new Proxy(listener.accept(), mysqlHost, mysqlPort, plugins).start();
+            catch (java.lang.InterruptedException e) {}
         }
- 
-        listener.close();
+        
     }
 }

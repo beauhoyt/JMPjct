@@ -11,7 +11,7 @@ PROXYOPT=""
 CLASSPATH=""
 
 # Connection options
-PROXYOPT="${PROXYOPT} -DmysqlHost=127.0.0.1 -DmysqlPort=3306 -Dport=5050"
+PROXYOPT="${PROXYOPT} -DHosts=5050:127.0.0.1:3306,5051:127.0.0.1:3306"
 
 # Logging Config File
 PROXYOPT="${PROXYOPT} -DlogConf=conf/log.conf"
