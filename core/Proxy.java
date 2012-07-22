@@ -183,8 +183,7 @@ public class Proxy extends Thread {
     }
     
     public void call_plugins() {
-        for (int i = 0; i < this.plugins.size(); i++) {
-            Proxy_Plugin plugin = this.plugins.get(i);
+        for (Proxy_Plugin plugin : this.plugins) {
             switch (this.mode) {
                 case MySQL_Flags.MODE_INIT:
                     plugin.init(this);
@@ -338,9 +337,8 @@ public class Proxy extends Thread {
     public void write(OutputStream out) {
         this.logger.trace("write");
         
-        for (int i = 0; i < this.buffer.size(); i++) {
-            byte[] packet = this.buffer.get(i);
-            this.logger.trace("Writing packet "+i+" size "+packet.length);
+        for (byte[] packet: this.buffer) {
+            this.logger.trace("Writing packet size "+packet.length);
             try {
                 out.write(packet);
             }
