@@ -33,6 +33,7 @@ public class JMP {
         String[] ps = System.getProperty("plugins").split(",");
         
         while (listening) {
+            plugins = new ArrayList<Proxy_Plugin>();
             for (String p: ps) {
                 try {
                     plugins.add((Proxy_Plugin) Proxy_Plugin.class.getClassLoader().loadClass(p).newInstance());
@@ -52,7 +53,6 @@ public class JMP {
                 }
             }
             new Proxy(listener.accept(), mysqlHost, mysqlPort, plugins).start();
-            plugins.clear();
         }
  
         listener.close();
