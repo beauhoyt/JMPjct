@@ -81,16 +81,25 @@ public class Plugin_Debug extends Plugin_Base {
     }
     
     public static final void dump_buffer(Proxy context) {
-        for (int i = 0; i < context.buffer.size(); i++) {
-            Plugin_Debug.dump_packet(context.buffer.get(i));
+        Logger logger = Logger.getLogger("Plugin.Debug");
+        
+        if (!logger.isTraceEnabled())
+            return;
+        
+        for (byte[] packet: context.buffer) {
+            Plugin_Debug.dump_packet(packet);
         }
     }
     
     public static final void dump_packet(byte[] packet) {
+        Logger logger = Logger.getLogger("Plugin.Debug");
+        
+        if (!logger.isTraceEnabled())
+            return;
+        
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             HexDump.dump(packet, 0, out, 0);
-            Logger logger = Logger.getLogger("Plugin.Debug");
             logger.trace("Dumping packet\n"+out.toString());
         }
         catch (IOException e) {
