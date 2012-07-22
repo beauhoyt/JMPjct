@@ -380,6 +380,7 @@ public class Proxy extends Thread {
         this.offset -= 2;
         this.set_fixed_int(2, this.serverCapabilityFlags);
         this.serverCharacterSet = this.get_fixed_int(1);
+        MySQL_ResultSet_Text.characterSet = this.serverCharacterSet;
         this.statusFlags = this.get_fixed_int(2);
 
         this.write(this.clientOut);

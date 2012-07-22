@@ -6,33 +6,6 @@
  * 
  */
 
-/*
-
-ERR packet
-----------
-
-::
-
-  ERR
-    
-    direction: server -> client
-
-    payload:
-      1              [ff] the ERR header
-      2              error code 
-        if capabilities & PROTOCOL_41:
-      1              '#' the sql-state marker
-      string[5]      sql-state
-        all protocols:
-      string[p]      error-message
-
-    example:
-      17 00 00 01 ff 48 04 23    48 59 30 30 30 4e 6f 20    .....H.#HY000No 
-      74 61 62 6c 65 73 20 75    73 65 64                   tables used 
-
-*/
-
-
 import org.apache.log4j.Logger;
 
 public class MySQL_ERR extends MySQL_Packet {
@@ -88,5 +61,4 @@ public class MySQL_ERR extends MySQL_Packet {
         
         return packet;
     }
-    
 }

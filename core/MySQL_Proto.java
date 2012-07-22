@@ -82,6 +82,12 @@ public class MySQL_Proto {
     }
     
     public static byte[] build_lenenc_str(String str) {
+        if (str.equals("")) {
+            byte[] packet = new byte[1];
+            packet[0] = 0x00;
+            return packet;
+        }
+        
         byte[] size = MySQL_Proto.build_lenenc_int(str.length());
         byte[] strByte = MySQL_Proto.build_fixed_str(str, str.length());
         byte[] packet = new byte[size.length + strByte.length];

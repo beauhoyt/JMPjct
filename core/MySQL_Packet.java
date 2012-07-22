@@ -2,7 +2,6 @@
  * A MySQL Packet
  */
 
-
 import java.util.*;
 import org.apache.log4j.Logger;
 
@@ -24,5 +23,4 @@ public abstract class MySQL_Packet {
         
         return packet;
     }
-    
 }

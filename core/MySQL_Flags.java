@@ -108,5 +108,4 @@ interface MySQL_Flags {
     public static final int MYSQL_TYPE_VAR_STRING               = 0xfd;
     public static final int MYSQL_TYPE_STRING                   = 0xfe;
     public static final int MYSQL_TYPE_GEOMETRY                 = 0xff;
-
 }

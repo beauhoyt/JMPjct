@@ -59,6 +59,7 @@ public class Plugin_Ehcache extends Plugin_Base {
         this.logger.trace("Command: '"+command+"'"+" value: '"+value+"'");
         
         if (command.equals("CACHE")) {
+            this.logger.trace("CACHE");
             this.TTL = Integer.parseInt(value);
             context.bufferResultSet = true;
             
@@ -87,6 +88,7 @@ public class Plugin_Ehcache extends Plugin_Base {
             }
         }
         else if (command.equals("FLUSH")) {
+            this.logger.trace("FLUSH");
             MySQL_OK ok = new MySQL_OK();
             
             boolean removed = Plugin_Ehcache.cache.remove(this.key);
@@ -99,28 +101,59 @@ public class Plugin_Ehcache extends Plugin_Base {
             context.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
         }
         else if (command.equals("REFRESH")) {
+            this.logger.trace("REFRESH");
             Plugin_Ehcache.cache.remove(this.key);
             this.TTL = Integer.parseInt(value);
             context.bufferResultSet = true;
         }
         else if (command.equals("STATS")) {
-            this.logger.info(Plugin_Ehcache.cache.getSize()+" Elements in Cache");
-            this.logger.info(Plugin_Ehcache.cache.getMemoryStoreSize()+" Elements in Memory");
-            this.logger.info(Plugin_Ehcache.cache.getDiskStoreSize()+" Elements on Disk");
-            /*
-            this.logger.info(Plugin_Ehcache.cache.getHitCount()+" Hits");
-            this.logger.info(Plugin_Ehcache.cache.getMemoryStoreHitCount()+" Memory Hits");
-            this.logger.info(Plugin_Ehcache.cache.getDiskStoreCount()+" Disk Hits");
-            this.logger.info(Plugin_Ehcache.cache.getMissCountNotFound()+" Misses");
-            this.logger.info(Plugin_Ehcache.cache.getMissCountExpired()+" Miss Expired");
-            */
+            this.logger.trace("STATS");
+            MySQL_ResultSet_Text rs = new MySQL_ResultSet_Text();
+            MySQL_Column key = new MySQL_Column("Key");
+            rs.addColumn(key);
+            MySQL_Column val = new MySQL_Column("Value");
+            rs.addColumn(val);
+            
+            MySQL_Row row = new MySQL_Row();
+            row.addData("Elements in Cache");
+            row.addData(Plugin_Ehcache.cache.getSize());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("Elements in Memory");
+            row.addData(Plugin_Ehcache.cache.getMemoryStoreSize());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("Elements on Disk");
+            row.addData(Plugin_Ehcache.cache.getDiskStoreSize());
+            rs.addRow(row);
+            
+            context.clear_buffer();
+            context.buffer = rs.toPackets();
+            context.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
         }
         else if (command.equals("DUMP KEYS")) {
+            this.logger.trace("DUMP KEYS");
             List keys = this.cache.getKeysWithExpiryCheck();
-            for( int i = 0; i < keys.size(); i++)
-                this.logger.trace("Key: '"+keys.get(i)+"'");
+            
+            MySQL_ResultSet_Text rs = new MySQL_ResultSet_Text();
+            MySQL_Column key = new MySQL_Column("Key");
+            rs.addColumn(key);
+            
+            for (Object k: keys) {
+                this.logger.trace("Key: '"+k+"'");
+                MySQL_Row row = new MySQL_Row();
+                row.addData(k.toString());
+                rs.addRow(row); 
+            }
+            
+            context.clear_buffer();
+            context.buffer = rs.toPackets();
+            context.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
         }
         else {
+            this.logger.trace("FAIL");
             MySQL_ERR err = new MySQL_ERR();
             err.sequenceId = context.sequenceId+1;
             err.errorCode = 1047;

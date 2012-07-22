@@ -1,15 +1,12 @@
 /*
- * A MySQL OK Packet
+ * A MySQL EOF Packet
  */
 
-import java.util.*;
 import org.apache.log4j.Logger;
 
-public class MySQL_OK extends MySQL_Packet {
-    public Logger logger = Logger.getLogger("MySQL_OK");
+public class MySQL_EOF extends MySQL_Packet {
+    public Logger logger = Logger.getLogger("MySQL_EOF");
     
-    public long affectedRows = 0;
-    public long lastInsertId = 0;
     public long statusFlags = 0;
     public long warnings = 0;
     
@@ -28,19 +25,11 @@ public class MySQL_OK extends MySQL_Packet {
     public byte[] getPayload() {
         int size = 0;
         
-        // 1 byte for the OK header
+        // 1 byte for the EOF header
         byte[] header = new byte[1];
-        header[0] = MySQL_Flags.OK;
+        header[0] = MySQL_Flags.EOF;
         size += header.length;
-        
-        // Affected Rows
-        byte[] affectedRows = MySQL_Proto.build_lenenc_int(this.affectedRows);
-        size += affectedRows.length;
-        
-        // last-insert-id
-        byte[] lastInsertId = MySQL_Proto.build_lenenc_int(this.lastInsertId);
-        size += lastInsertId.length;
-        
+
         // status flags
         byte[] statusFlags = MySQL_Proto.build_fixed_int(2, this.statusFlags);
         size += statusFlags.length;
@@ -55,12 +44,6 @@ public class MySQL_OK extends MySQL_Packet {
         
         System.arraycopy(header, 0, packet, offset, header.length);
         offset += header.length;
-        
-        System.arraycopy(affectedRows, 0, packet, offset, affectedRows.length);
-        offset += affectedRows.length;
-        
-        System.arraycopy(lastInsertId, 0, packet, offset, lastInsertId.length);
-        offset += lastInsertId.length;
         
         System.arraycopy(statusFlags, 0, packet, offset, statusFlags.length);
         offset += statusFlags.length;
