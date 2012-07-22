@@ -6,7 +6,7 @@ import java.util.*;
 import org.apache.log4j.Logger;
 
 public abstract class MySQL_Packet {
-    public Logger logger = Logger.getLogger("MySQL_Packet");
+    public Logger logger = Logger.getLogger("MySQL.Packet");
     
     public long sequenceId = 0;
     

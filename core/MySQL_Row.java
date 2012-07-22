@@ -6,7 +6,7 @@ import java.util.*;
 import org.apache.log4j.Logger;
 
 public class MySQL_Row extends MySQL_Packet {
-    public Logger logger = Logger.getLogger("MySQL_Row");
+    public Logger logger = Logger.getLogger("MySQL.Row");
     
     public ArrayList<Object> data = new ArrayList<Object>();
     

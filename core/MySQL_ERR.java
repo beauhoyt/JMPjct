@@ -9,7 +9,7 @@
 import org.apache.log4j.Logger;
 
 public class MySQL_ERR extends MySQL_Packet {
-    public Logger logger = Logger.getLogger("MySQL_ERR");
+    public Logger logger = Logger.getLogger("MySQL.ERR");
     
     public long errorCode = 0;
     public String sqlState = "HY000";

@@ -5,7 +5,7 @@
 import org.apache.log4j.Logger;
 
 public class MySQL_EOF extends MySQL_Packet {
-    public Logger logger = Logger.getLogger("MySQL_EOF");
+    public Logger logger = Logger.getLogger("MySQL.EOF");
     
     public long statusFlags = 0;
     public long warnings = 0;

@@ -6,7 +6,7 @@ import java.util.*;
 import org.apache.log4j.Logger;
 
 public class MySQL_ResultSet_Text {
-    public Logger logger = Logger.getLogger("MySQL_ResultSet_Text");
+    public Logger logger = Logger.getLogger("MySQL.ResultSet.Text");
     
     public long sequenceId = 1;
     public static long characterSet = 0;

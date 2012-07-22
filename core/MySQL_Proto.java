@@ -5,7 +5,7 @@
 import org.apache.log4j.Logger;
 
 public class MySQL_Proto {
-    public static Logger logger = Logger.getLogger("MySQL_Proto");
+    public static Logger logger = Logger.getLogger("MySQL.Proto");
     
     public static byte[] build_fixed_int(int size, long value) {
         byte[] packet = new byte[size];

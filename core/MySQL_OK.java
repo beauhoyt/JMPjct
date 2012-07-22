@@ -6,7 +6,7 @@ import java.util.*;
 import org.apache.log4j.Logger;
 
 public class MySQL_OK extends MySQL_Packet {
-    public Logger logger = Logger.getLogger("MySQL_OK");
+    public Logger logger = Logger.getLogger("MySQL.OK");
     
     public long affectedRows = 0;
     public long lastInsertId = 0;

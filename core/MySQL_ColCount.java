@@ -5,7 +5,7 @@
 import org.apache.log4j.Logger;
 
 public class MySQL_ColCount extends MySQL_Packet {
-    public Logger logger = Logger.getLogger("MySQL_ColCount");
+    public Logger logger = Logger.getLogger("MySQL.ColCount");
     
     public long colCount = 0;
     

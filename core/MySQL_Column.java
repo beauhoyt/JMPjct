@@ -5,7 +5,7 @@
 import org.apache.log4j.Logger;
 
 public class MySQL_Column extends MySQL_Packet {
-    public Logger logger = Logger.getLogger("MySQL_Column");
+    public Logger logger = Logger.getLogger("MySQL.Column");
     
     public String catalog = "def";
     public String schema = "";

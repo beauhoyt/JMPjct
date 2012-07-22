@@ -322,7 +322,6 @@ public class Proxy extends Thread {
     
     public void write(OutputStream out) {
         this.logger.trace("write");
-        //Plugin_Debug.dump_buffer(this);
         
         for (int i = 0; i < this.buffer.size(); i++) {
             byte[] packet = this.buffer.get(i);
