@@ -89,7 +89,7 @@ public class MySQL_Proto {
         }
         
         byte[] size = MySQL_Proto.build_lenenc_int(str.length());
-        byte[] strByte = MySQL_Proto.build_fixed_str(str, str.length());
+        byte[] strByte = MySQL_Proto.build_fixed_str(str.length(), str);
         byte[] packet = new byte[size.length + strByte.length];
         System.arraycopy(size, 0, packet, 0, size.length);
         System.arraycopy(strByte, 0, packet, size.length, strByte.length);
@@ -97,16 +97,29 @@ public class MySQL_Proto {
     }
     
     public static byte[] build_null_str(String str) {
-        return MySQL_Proto.build_fixed_str(str, str.length() + 1);
+        return MySQL_Proto.build_fixed_str(str.length() + 1, str);
     }
     
-    public static byte[] build_fixed_str(String str, int size) {
+    public static byte[] build_fixed_str(int size, String str) {
         byte[] packet = new byte[size];
         byte[] strByte = str.getBytes();
         if (strByte.length < packet.length)
             size = strByte.length;
         System.arraycopy(strByte, 0, packet, 0, size);
         return packet;
+    }
+    
+    public static byte[] build_filler(int len) {
+        byte[] filler = new byte[len];
+        for (int i = 0; i < len; i++)
+            filler[i] = 0x00;
+        return filler;
+    }
+    
+    public static byte[] build_byte(byte value) {
+        byte[] field = new byte[1];
+        field[0] = value;
+        return field;
     }
     
     public static char int2char(byte i) {

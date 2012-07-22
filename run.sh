@@ -30,6 +30,7 @@ PROXYOPT="${PROXYOPT} -DehcacheCacheName=MySQL"
 
 # Core components
 CLASSPATH="${CLASSPATH}:core"
+CLASSPATH="${CLASSPATH}:core/proto"
 
 # Locate the plugins
 for path in `find plugins -type d`
