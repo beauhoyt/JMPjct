@@ -58,15 +58,18 @@ public class Plugin_Ehcache extends Plugin_Base {
         this.logger.info("Cache Key: '"+this.key+"'");
         this.logger.trace("Command: '"+command+"'"+" value: '"+value+"'");
         
-        if (command.equals("CACHE")) {
+        if (command.equalsIgnoreCase("CACHE")) {
             this.logger.trace("CACHE");
             this.TTL = Integer.parseInt(value);
             context.bufferResultSet = true;
+            
+            Plugin_Ehcache.cache.acquireWriteLockOnKey(this.key);
             
             Element element = Plugin_Ehcache.cache.get(this.key);
             
             if (element != null) {
                 this.logger.trace("Cache Hit!");
+                Plugin_Ehcache.cache.releaseWriteLockOnKey(this.key);
                 
                 context.clear_buffer();
                 context.buffer = (ArrayList<byte[]>) element.getValue();
@@ -87,7 +90,7 @@ public class Plugin_Ehcache extends Plugin_Base {
                 }
             }
         }
-        else if (command.equals("FLUSH")) {
+        else if (command.equalsIgnoreCase("FLUSH")) {
             this.logger.trace("FLUSH");
             MySQL_OK ok = new MySQL_OK();
             
@@ -100,13 +103,24 @@ public class Plugin_Ehcache extends Plugin_Base {
             context.buffer.add(ok.toPacket());
             context.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
         }
-        else if (command.equals("REFRESH")) {
+        else if (command.equalsIgnoreCase("FLUSHALL")) {
+            this.logger.trace("FLUSHALL");
+            MySQL_OK ok = new MySQL_OK();
+            
+            Plugin_Ehcache.cache.removeAll();
+            ok.sequenceId = context.sequenceId+1;
+            
+            context.clear_buffer();
+            context.buffer.add(ok.toPacket());
+            context.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
+        }
+        else if (command.equalsIgnoreCase("REFRESH")) {
             this.logger.trace("REFRESH");
             Plugin_Ehcache.cache.remove(this.key);
             this.TTL = Integer.parseInt(value);
             context.bufferResultSet = true;
         }
-        else if (command.equals("STATS")) {
+        else if (command.equalsIgnoreCase("STATS")) {
             this.logger.trace("STATS");
             MySQL_ResultSet_Text rs = new MySQL_ResultSet_Text();
             MySQL_Column key = new MySQL_Column("Key");
@@ -133,7 +147,7 @@ public class Plugin_Ehcache extends Plugin_Base {
             context.buffer = rs.toPackets();
             context.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
         }
-        else if (command.equals("DUMP KEYS")) {
+        else if (command.equalsIgnoreCase("DUMP KEYS")) {
             this.logger.trace("DUMP KEYS");
             List keys = this.cache.getKeysWithExpiryCheck();
             
@@ -147,6 +161,60 @@ public class Plugin_Ehcache extends Plugin_Base {
                 row.addData(k.toString());
                 rs.addRow(row); 
             }
+            
+            context.clear_buffer();
+            context.buffer = rs.toPackets();
+            context.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
+        }
+        else if (command.equalsIgnoreCase("EHCACHE HELP")) {
+            this.logger.trace("EHCACHE HELP");
+            
+            MySQL_ResultSet_Text rs = new MySQL_ResultSet_Text();
+            
+            rs.addColumn(new MySQL_Column("Command"));
+            rs.addColumn(new MySQL_Column("Help"));
+            
+            MySQL_Row row = null;
+            
+            row = new MySQL_Row();
+            row.addData("Usage");
+            row.addData("/* COMMAND */ SELECT query FROM table");
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("CACHE: TTL");
+            row.addData("Cache the query result for TTL seconds");
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("FLUSH");
+            row.addData("Flush the query from the cache");
+            rs.addRow(row); 
+            
+            row = new MySQL_Row();
+            row.addData("REFRESH: TTL");
+            row.addData("Expire the query and refetch it");
+            rs.addRow(row); 
+            
+            row = new MySQL_Row();
+            row.addData("STATS");
+            row.addData("Output Ehcache statistics");
+            rs.addRow(row); 
+            
+            row = new MySQL_Row();
+            row.addData("DUMP KEYS");
+            row.addData("Dump all the keys currently in the cache");
+            rs.addRow(row); 
+            
+            row = new MySQL_Row();
+            row.addData("EHCACHE HELP");
+            row.addData("This help");
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("FLUSHALL");
+            row.addData("Removes all cached items");
+            rs.addRow(row); 
             
             context.clear_buffer();
             context.buffer = rs.toPackets();
@@ -176,5 +244,6 @@ public class Plugin_Ehcache extends Plugin_Base {
         Element element = new Element(this.key, context.buffer);
         element.setTimeToLive(this.TTL);
         Plugin_Ehcache.cache.put(element);
+        Plugin_Ehcache.cache.releaseWriteLockOnKey(this.key);
     }
 }
