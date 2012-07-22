@@ -83,4 +83,34 @@ public class MySQL_Proto {
         
         return packet;
     }
+    
+    public static byte[] build_lenenc_str(String str) {
+        byte[] size = MySQL_Proto.build_lenenc_int(str.length());
+        byte[] strByte = MySQL_Proto.build_fixed_str(str, str.length());
+        byte[] packet = new byte[size.length + strByte.length];
+        System.arraycopy(size, 0, packet, 0, size.length);
+        System.arraycopy(strByte, 0, packet, size.length, strByte.length);
+        return packet;
+    }
+    
+    public static byte[] build_null_str(String str) {
+        return MySQL_Proto.build_fixed_str(str, str.length() + 1);
+    }
+    
+    public static byte[] build_fixed_str(String str, int size) {
+        byte[] packet = new byte[size];
+        byte[] strByte = str.getBytes();
+        if (strByte.length < packet.length)
+            size = strByte.length;
+        System.arraycopy(strByte, 0, packet, 0, size);
+        return packet;
+    }
+    
+    public static char int2char(byte i) {
+        return (char)i;
+    }
+    
+    public static byte char2int(char i) {
+        return (byte)i;
+    }
 }

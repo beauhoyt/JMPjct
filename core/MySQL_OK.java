@@ -114,6 +114,7 @@ public class MySQL_OK {
         byte[] packetSize = MySQL_Proto.build_fixed_int(3, (size - 4));
         
         int offset = 0;
+        
         System.arraycopy(packetSize, 0, packet, offset, packetSize.length);
         offset += packetSize.length;
         

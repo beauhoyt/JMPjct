@@ -74,8 +74,17 @@ public class Plugin_Ehcache extends Plugin_Base {
                 context.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
                 
                 if (context.buffer.size() == 0) {
-                    this.logger.fatal("Buffer is empty!?!?");
-                    context.halt();
+                    MySQL_ERR err = new MySQL_ERR();
+                    err.sequenceId = context.sequenceId+1;
+                    err.errorCode = 1032;
+                    err.sqlState = "HY000";
+                    err.errorMessage = "Can't find record in ehcache";
+                    
+                    context.clear_buffer();
+                    context.buffer.add(err.toPacket());
+                    context.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
+                    
+                    this.logger.fatal("Cache hit but invalid result!");
                 }
             }
         }
@@ -89,7 +98,6 @@ public class Plugin_Ehcache extends Plugin_Base {
             
             context.clear_buffer();
             context.buffer.add(ok.toPacket());
-            Plugin_Debug.dump_buffer(context);
             context.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
         }
         else if (command.equals("REFRESH")) {
@@ -115,8 +123,17 @@ public class Plugin_Ehcache extends Plugin_Base {
                 this.logger.trace("Key: '"+keys.get(i)+"'");
         }
         else {
+            MySQL_ERR err = new MySQL_ERR();
+            err.sequenceId = context.sequenceId+1;
+            err.errorCode = 1047;
+            err.sqlState = "08S01";
+            err.errorMessage = "Unknown command '"+command+"'";
+            
+            context.clear_buffer();
+            context.buffer.add(err.toPacket());
+            context.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
+            
             this.logger.fatal(command+" is unknown!");
-            context.halt();
         }
     }
     

@@ -86,6 +86,7 @@ public class Proxy extends Thread {
         }
         catch (IOException e) {
             this.logger.fatal("IOException: "+e);
+            this.running = 0;
             return;
         }
     }
@@ -94,7 +95,6 @@ public class Proxy extends Thread {
         this.logger.trace("MODE_INIT");
         this.mode = MySQL_Flags.MODE_INIT;
         this.nextMode = MySQL_Flags.MODE_READ_HANDSHAKE;
-        this.running = 1;
         this.call_plugins();
         this.mode = this.nextMode;
 
