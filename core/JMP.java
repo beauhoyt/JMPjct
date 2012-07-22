@@ -29,14 +29,5 @@ public class JMP {
             thread.start();
             threads.add(thread);
         }
-        
-        // Wait for all the threads now
-        for (JMP_Thread thread : threads) {
-            try {
-                thread.join();
-            }
-            catch (java.lang.InterruptedException e) {}
-        }
-        
     }
 }
