@@ -2,9 +2,6 @@
  * A collection of mysql proto based functions
  */
 
-import java.net.*;
-import java.io.*;
-import java.util.*;
 import org.apache.log4j.Logger;
 
 public class MySQL_Proto {

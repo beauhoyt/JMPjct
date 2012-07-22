@@ -49,8 +49,6 @@ flag   constant name
 */
 
 
-import java.net.*;
-import java.io.*;
 import java.util.*;
 import org.apache.log4j.Logger;
 
