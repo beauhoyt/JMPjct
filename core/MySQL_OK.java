@@ -52,18 +52,13 @@ flag   constant name
 import java.util.*;
 import org.apache.log4j.Logger;
 
-public class MySQL_OK {
+public class MySQL_OK extends MySQL_Packet {
     public Logger logger = Logger.getLogger("MySQL_OK");
     
-    public long sequenceId = 0;
     public long affectedRows = 0;
     public long lastInsertId = 0;
     public long statusFlags = 0;
     public long warnings = 0;
-    
-    public MySQL_OK() {
-        return;
-    }
     
     public void setStatusFlag(long flag) {
         this.statusFlags |= flag;
@@ -77,15 +72,8 @@ public class MySQL_OK {
         this.statusFlags ^= flag;
     }
     
-    public byte[] toPacket() {
+    public byte[] getPayload() {
         int size = 0;
-        
-        // 3 bytes for the length
-        size += 3;
-        
-        // sequenceId
-        byte[] sequenceId = MySQL_Proto.build_fixed_int(1, this.sequenceId);
-        size += sequenceId.length;
         
         // 1 byte for the OK header
         byte[] header = new byte[1];
@@ -109,15 +97,8 @@ public class MySQL_OK {
         size += warnings.length;
         
         byte[] packet = new byte[size];
-        byte[] packetSize = MySQL_Proto.build_fixed_int(3, (size - 4));
         
         int offset = 0;
-        
-        System.arraycopy(packetSize, 0, packet, offset, packetSize.length);
-        offset += packetSize.length;
-        
-        System.arraycopy(sequenceId, 0, packet, offset, sequenceId.length);
-        offset += sequenceId.length;
         
         System.arraycopy(header, 0, packet, offset, header.length);
         offset += header.length;
