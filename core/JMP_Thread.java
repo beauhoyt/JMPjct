@@ -35,7 +35,10 @@ public class JMP_Thread extends Thread {
         
         this.logger.info("Listening on "+this.port+" and forwarding to "+this.mysqlHost+":"+this.mysqlPort);
         
-        String[] ps = System.getProperty("plugins").split(",");
+        String[] ps = new String[0];
+        
+        if (System.getProperty("plugins") != null)
+            ps = System.getProperty("plugins").split(",");
         
         while (this.listening) {
             plugins = new ArrayList<Proxy_Plugin>();
