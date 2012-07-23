@@ -34,8 +34,11 @@ public class Proxy extends Thread {
     public int offset = 0;
     
     // Stop the thread?
-    public int running = 1;
+    public boolean running = true;
 
+    // What sorta of result set should we expect?
+    public int expectedResultSet = MySQL_Flags.RS_OK;
+    
     // Connection info
     public byte packetType = 0;
     public String schema = "";
@@ -179,7 +182,7 @@ public class Proxy extends Thread {
         this.logger.info("Halting!");
         this.mode = MySQL_Flags.MODE_CLEANUP;
         this.nextMode = MySQL_Flags.MODE_CLEANUP;
-        this.running = 0;
+        this.running = false;
     }
     
     public void call_plugins() {
