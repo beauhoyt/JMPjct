@@ -22,6 +22,14 @@ public class MySQL_Row extends MySQL_Packet {
         this.data.add(String.valueOf(data));
     }
     
+    public void addData(float data) {
+        this.data.add(String.valueOf(data));
+    }
+    
+    public void addData(boolean data) {
+        this.data.add(String.valueOf(data));
+    }
+    
     // Add other addData for other types here
     
     public ArrayList<byte[]> getPayload() {

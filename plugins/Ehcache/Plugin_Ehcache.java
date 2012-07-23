@@ -3,6 +3,8 @@ import org.apache.log4j.Logger;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
+import net.sf.ehcache.Statistics;
+import net.sf.ehcache.terracotta.TerracottaNotRunningException;
 
 public class Plugin_Ehcache extends Plugin_Base {
     private static Ehcache cache = null;
@@ -25,6 +27,7 @@ public class Plugin_Ehcache extends Plugin_Base {
         if (Plugin_Ehcache.cache == null) {
             this.logger.trace("Ehcache - cache: Getting "+System.getProperty("ehcacheCacheName"));
             Plugin_Ehcache.cache = Plugin_Ehcache.cachemanager.getEhcache(System.getProperty("ehcacheCacheName"));
+            Plugin_Ehcache.cache.setSampledStatisticsEnabled(true);
         }
         
         if (Plugin_Ehcache.cache == null) {
@@ -126,24 +129,182 @@ public class Plugin_Ehcache extends Plugin_Base {
         else if (command.equalsIgnoreCase("STATS")) {
             this.logger.trace("STATS");
             MySQL_ResultSet_Text rs = new MySQL_ResultSet_Text();
+            MySQL_Row row = null;
             MySQL_Column key = new MySQL_Column("Key");
             rs.addColumn(key);
             MySQL_Column val = new MySQL_Column("Value");
             rs.addColumn(val);
             
-            MySQL_Row row = new MySQL_Row();
-            row.addData("Elements in Cache");
-            row.addData(Plugin_Ehcache.cache.getSize());
+            Statistics stats = Plugin_Ehcache.cache.getStatistics();
+            
+            row = new MySQL_Row();
+            row.addData("AverageGetTime");
+            row.addData(stats.getAverageGetTime());
             rs.addRow(row);
             
             row = new MySQL_Row();
-            row.addData("Elements in Memory");
-            row.addData(Plugin_Ehcache.cache.getMemoryStoreSize());
+            row.addData("AverageSearchTime");
+            row.addData(stats.getAverageSearchTime() );
             rs.addRow(row);
             
             row = new MySQL_Row();
-            row.addData("Elements on Disk");
-            row.addData(Plugin_Ehcache.cache.getDiskStoreSize());
+            row.addData("CacheHits");
+            row.addData(stats.getCacheHits());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("CacheMisses");
+            row.addData(stats.getCacheMisses());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("DiskStoreObjectCount");
+            row.addData(stats.getDiskStoreObjectCount());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("EvictionCount");
+            row.addData(stats.getEvictionCount());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("InMemoryHits");
+            row.addData(stats.getInMemoryHits());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("InMemoryMisses");
+            row.addData(stats.getInMemoryMisses());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("MemoryStoreObjectCount");
+            row.addData(stats.getMemoryStoreObjectCount());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("ObjectCount");
+            row.addData(stats.getObjectCount());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("OffHeapHits");
+            row.addData(stats.getOffHeapHits());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("OffHeapMisses");
+            row.addData(stats.getOffHeapMisses());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("OffHeapStoreObjectCount");
+            row.addData(stats.getOffHeapStoreObjectCount());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("OnDiskHits");
+            row.addData(stats.getOnDiskHits());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("OnDiskMisses");
+            row.addData(stats.getOnDiskMisses());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("SearchesPerSecond");
+            row.addData(stats.getSearchesPerSecond());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("WriterQueueSize");
+            row.addData(stats.getWriterQueueSize());
+            rs.addRow(row);
+            
+            context.clear_buffer();
+            context.buffer = rs.toPackets();
+            context.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
+        }
+        else if (command.equalsIgnoreCase("INFO")) {
+            this.logger.trace("INFO");
+            MySQL_ResultSet_Text rs = new MySQL_ResultSet_Text();
+            MySQL_Row row = null;
+            MySQL_Column key = new MySQL_Column("Key");
+            rs.addColumn(key);
+            MySQL_Column val = new MySQL_Column("Value");
+            rs.addColumn(val);
+            
+            row = new MySQL_Row();
+            row.addData("getGuid");
+            row.addData(Plugin_Ehcache.cache.getGuid());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("getName");
+            row.addData(Plugin_Ehcache.cache.getName());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("getStatus");
+            row.addData(Plugin_Ehcache.cache.getStatus().toString());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("isDisabled");
+            row.addData(Plugin_Ehcache.cache.isDisabled());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("isSearchable");
+            row.addData(Plugin_Ehcache.cache.isSearchable());
+            rs.addRow(row);
+            
+            try {
+                row = new MySQL_Row();
+                row.addData("isNodeBulkLoadEnabled");
+                row.addData(Plugin_Ehcache.cache.isNodeBulkLoadEnabled());
+                rs.addRow(row);
+                
+                row = new MySQL_Row();
+                row.addData("isClusterBulkLoadEnabled");
+                row.addData(Plugin_Ehcache.cache.isClusterBulkLoadEnabled());
+                rs.addRow(row);
+            }
+            catch (UnsupportedOperationException e) {}
+            catch (TerracottaNotRunningException e) {}
+            
+            row = new MySQL_Row();
+            row.addData("isStatisticsEnabled");
+            row.addData(Plugin_Ehcache.cache.isStatisticsEnabled());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("isSampledStatisticsEnabled");
+            row.addData(Plugin_Ehcache.cache.isSampledStatisticsEnabled());
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("getStatisticsAccuracy");
+            switch (Plugin_Ehcache.cache.getStatisticsAccuracy()) {
+                case Statistics.STATISTICS_ACCURACY_BEST_EFFORT:
+                    row.addData("STATISTICS_ACCURACY_BEST_EFFORT");
+                    break;
+                case Statistics.STATISTICS_ACCURACY_GUARANTEED:
+                    row.addData("STATISTICS_ACCURACY_GUARANTEED");
+                    break;
+                case Statistics.STATISTICS_ACCURACY_NONE:
+                    row.addData("STATISTICS_ACCURACY_NONE");
+                    break;
+                default:
+                    row.addData("STATISTICS_ACCURACY_UNKNOWN");
+                    break;
+            }
+            rs.addRow(row);
+            
+            row = new MySQL_Row();
+            row.addData("hasAbortedSizeOf");
+            row.addData(Plugin_Ehcache.cache.hasAbortedSizeOf());
             rs.addRow(row);
             
             context.clear_buffer();
