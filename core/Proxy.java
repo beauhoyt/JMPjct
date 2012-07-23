@@ -89,7 +89,7 @@ public class Proxy extends Thread {
         }
         catch (IOException e) {
             this.logger.fatal("IOException: "+e);
-            this.running = 0;
+            this.running = false;
             return;
         }
     }
@@ -102,7 +102,7 @@ public class Proxy extends Thread {
             this.call_plugins();
             this.mode = this.nextMode;
     
-            while (this.running == 1) {
+            while (this.running) {
                 
                 switch (this.mode) {
                     case MySQL_Flags.MODE_READ_HANDSHAKE:
@@ -268,7 +268,7 @@ public class Proxy extends Thread {
                 this.halt();
                 return;
             }
-        } while (packet[4] != MySQL_Flags.EOF);
+        } while (packet[4] != MySQL_Flags.EOF && packet[4] != MySQL_Flags.ERR);
         
         // Do we have more results?
         this.offset=7;
