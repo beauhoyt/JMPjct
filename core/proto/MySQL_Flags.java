@@ -16,6 +16,7 @@ interface MySQL_Flags {
     public static final int MODE_CLEANUP                        = 8; // Connection closed
     
     // Packet types
+    public static final byte COM_SLEEP                          = (byte)0x00; // deprecated
     public static final byte COM_QUIT                           = (byte)0x01;
     public static final byte COM_INIT_DB                        = (byte)0x02;
     public static final byte COM_QUERY                          = (byte)0x03;
@@ -25,10 +26,13 @@ interface MySQL_Flags {
     public static final byte COM_REFRESH                        = (byte)0x07;
     public static final byte COM_SHUTDOWN                       = (byte)0x08;
     public static final byte COM_STATISTICS                     = (byte)0x09;
-    public static final byte COM_PROCESS_INFO                   = (byte)0x0a;
+    public static final byte COM_PROCESS_INFO                   = (byte)0x0a; // deprecated
+    public static final byte COM_CONNECT                        = (byte)0x0b; // deprecated
     public static final byte COM_PROCESS_KILL                   = (byte)0x0c;
     public static final byte COM_DEBUG                          = (byte)0x0d;
     public static final byte COM_PING                           = (byte)0x0e;
+    public static final byte COM_TIME                           = (byte)0x0f; // deprecated
+    public static final byte COM_DELAYED_INSERT                 = (byte)0x10; // deprecated
     public static final byte COM_CHANGE_USER                    = (byte)0x11;
     public static final byte COM_BINLOG_DUMP                    = (byte)0x12;
     public static final byte COM_TABLE_DUMP                     = (byte)0x13;
@@ -41,6 +45,7 @@ interface MySQL_Flags {
     public static final byte COM_STMT_RESET                     = (byte)0x1a;
     public static final byte COM_SET_OPTION                     = (byte)0x1b;
     public static final byte COM_STMT_FETCH                     = (byte)0x1c;
+    public static final byte COM_DAEMON                         = (byte)0x1d; // deprecated
     public static final byte COM_UNKNOWN                        = (byte)0xff;
     
     public static final byte OK                                 = (byte)0x00;
@@ -109,4 +114,30 @@ interface MySQL_Flags {
     public static final int MYSQL_TYPE_VAR_STRING               = 0xfd;
     public static final int MYSQL_TYPE_STRING                   = 0xfe;
     public static final int MYSQL_TYPE_GEOMETRY                 = 0xff;
+
+    public static final int REFRESH_GRANT                       = 0x01; 
+    public static final int REFRESH_LOG                         = 0x02; 
+    public static final int REFRESH_TABLES                      = 0x04; 
+    public static final int REFRESH_HOSTS                       = 0x08; 
+    public static final int REFRESH_STATUS                      = 0x10; 
+    public static final int REFRESH_THREADS                     = 0x20; 
+    public static final int REFRESH_SLAVE                       = 0x40; 
+    public static final int REFRESH_MASTER                      = 0x80;
+    
+    public static final int SHUTDOWN_DEFAULT                    = 0x00; 
+    public static final int SHUTDOWN_WAIT_CONNECTIONS           = 0x01; 
+    public static final int SHUTDOWN_WAIT_TRANSACTIONS          = 0x02; 
+    public static final int SHUTDOWN_WAIT_UPDATES               = 0x08; 
+    public static final int SHUTDOWN_WAIT_ALL_BUFFERS           = 0x10; 
+    public static final int SHUTDOWN_WAIT_CRITICAL_BUFFERS      = 0x11; 
+    public static final int KILL_QUERY                          = 0xfe; 
+    public static final int KILL_CONNECTION                     = 0xff;
+ 
+    public static final int CURSOR_TYPE_NO_CURSOR               = 0x00;
+    public static final int CURSOR_TYPE_READ_ONLY               = 0x01;
+    public static final int CURSOR_TYPE_FOR_UPDATE              = 0x02;
+    public static final int CURSOR_TYPE_SCROLLABLE              = 0x04;
+    
+    public static final int MYSQL_OPTION_MULTI_STATEMENTS_ON    = 0;
+    public static final int MYSQL_OPTION_MULTI_STATEMENTS_OFF   = 1;
 }

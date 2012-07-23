@@ -12,7 +12,7 @@ public class MySQL_Auth_Challenge extends MySQL_Packet {
     public String serverVersion = "";
     public long connectionId = 0;
     public String challenge1 = "";
-    public long capabilityFlags = 0;
+    public long capabilityFlags = MySQL_Flags.CLIENT_PROTOCOL_41;
     public long characterSet = 0;
     public long statusFlags = 0;
     public String challenge2 = "";
