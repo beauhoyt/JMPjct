@@ -23,6 +23,10 @@ public class MySQL_EOF extends MySQL_Packet {
         this.statusFlags ^= flag;
     }
     
+    public boolean hasStatusFlag(long flag) {
+        return ((this.statusFlags & flag) == flag);
+    }
+    
     public ArrayList<byte[]> getPayload() {
         ArrayList<byte[]> payload = new ArrayList<byte[]>();
         
@@ -31,5 +35,25 @@ public class MySQL_EOF extends MySQL_Packet {
         payload.add(MySQL_Proto.build_fixed_int(2, this.warnings));
         
         return payload;
+    }
+    
+    public static MySQL_EOF loadFromPacket(byte[] packet) {
+        MySQL_EOF obj = new MySQL_EOF();
+        int offset = 3;
+        
+        obj.sequenceId = MySQL_Proto.get_fixed_int(packet, offset, 1);
+        offset += MySQL_Proto.get_offset_offset();
+        
+        // Header
+        MySQL_Proto.get_fixed_int(packet, offset, 1);
+        offset += MySQL_Proto.get_offset_offset();
+        
+        obj.statusFlags = MySQL_Proto.get_fixed_int(packet, offset, 2);
+        offset += MySQL_Proto.get_offset_offset();
+        
+        obj.warnings = MySQL_Proto.get_fixed_int(packet, offset, 2);
+        offset += MySQL_Proto.get_offset_offset();
+        
+        return obj;
     }
 }

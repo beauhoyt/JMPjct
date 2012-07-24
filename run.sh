@@ -4,14 +4,14 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-JAVAOPT="-Xmx4096m -prof"
+JAVAOPT="-Xmx4096m"
 JAVACOPT="-Xlint:unchecked"
 
 PROXYOPT=""
 CLASSPATH=""
 
 # Connection options
-PROXYOPT="${PROXYOPT} -DHosts=5050:127.0.0.1:3306,5051:127.0.0.1:3306"
+PROXYOPT="${PROXYOPT} -DHosts=5050:127.0.0.1:3306"
 
 # Logging Config File
 PROXYOPT="${PROXYOPT} -DlogConf=conf/log.conf"
@@ -19,7 +19,7 @@ PROXYOPT="${PROXYOPT} -DlogConf=conf/log.conf"
 # Plugins
 #PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug,Plugin_Example"
 #PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug"
-#PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug,Plugin_Ehcache"
+PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug,Plugin_Ehcache"
 
 # Ehcache
 PROXYOPT="${PROXYOPT} -DehcacheConf=conf/ehcache.xml"

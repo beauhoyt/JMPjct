@@ -45,7 +45,6 @@ public class Plugin_Ehcache extends Plugin_Base {
         // Reset all values on a new query
         this.TTL = 0;
         this.key = "";
-        context.bufferResultSet = false;
         
         if (!query.startsWith("/* "))
             return;
@@ -67,7 +66,7 @@ public class Plugin_Ehcache extends Plugin_Base {
         if (command.equalsIgnoreCase("CACHE")) {
             this.logger.trace("CACHE");
             this.TTL = Integer.parseInt(value);
-            context.bufferResultSet = true;
+            context.buffer_result_set();
             
             Plugin_Ehcache.cache.acquireWriteLockOnKey(this.key);
             
@@ -124,7 +123,7 @@ public class Plugin_Ehcache extends Plugin_Base {
             this.logger.trace("REFRESH");
             Plugin_Ehcache.cache.remove(this.key);
             this.TTL = Integer.parseInt(value);
-            context.bufferResultSet = true;
+            context.buffer_result_set();
         }
         else if (command.equalsIgnoreCase("STATS")) {
             this.logger.trace("STATS");

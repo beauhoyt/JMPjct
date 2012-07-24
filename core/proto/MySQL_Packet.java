@@ -32,4 +32,20 @@ public abstract class MySQL_Packet {
         
         return packet;
     }
+    
+    public static long getSize(byte[] packet) {
+        long size = MySQL_Proto.get_fixed_int(packet, 0, 3);
+        MySQL_Proto.get_offset_offset();
+        Logger.getLogger("MySQL.Packet").trace("Packet size is "+size);
+        return size;
+    }
+    
+    public static byte getType(byte[] packet) {
+        return packet[4];
+    }
+    
+    public static long getSequenceId(byte[] packet) {
+        return MySQL_Proto.get_fixed_int(packet, 3, 1);
+    }
+    
 }

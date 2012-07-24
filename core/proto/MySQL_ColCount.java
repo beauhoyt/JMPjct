@@ -17,4 +17,19 @@ public class MySQL_ColCount extends MySQL_Packet {
         
         return payload;
     }
+    
+    public static MySQL_ColCount loadFromPacket(byte[] packet) {
+        MySQL_ColCount obj = new MySQL_ColCount();
+        int offset = 3;
+        
+        obj.sequenceId = MySQL_Proto.get_fixed_int(packet, offset, 1);
+        offset += MySQL_Proto.get_offset_offset();
+        
+        // Header
+        obj.colCount = MySQL_Proto.get_lenenc_int(packet, offset);
+        offset += MySQL_Proto.get_offset_offset();
+        
+        return obj;
+    }
+    
 }

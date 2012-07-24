@@ -16,24 +16,24 @@ public class Plugin_Debug extends Plugin_Base {
     
     public void read_handshake(Proxy context) {
         this.logger.debug("<- AuthChallengePacket");
-        this.logger.debug("   Server Version: "+context.serverVersion);
-        this.logger.debug("   Connection Id: "+context.connectionId);
+        this.logger.debug("   Server Version: "+context.authChallenge.serverVersion);
+        this.logger.debug("   Connection Id: "+context.authChallenge.connectionId);
         this.logger.debug("   Server Capability Flags: "
-                          + Plugin_Debug.dump_capability_flags(context.serverCapabilityFlags));
+                          + Plugin_Debug.dump_capability_flags(context.authChallenge.capabilityFlags));
     }
     
     public void read_auth(Proxy context) {
         this.logger.debug("-> AuthResponsePacket");
-        this.logger.debug("   Max Packet Size: "+context.clientMaxPacketSize);
-        this.logger.debug("   User: "+context.user);
-        this.logger.debug("   Schema: "+context.schema);
+        this.logger.debug("   Max Packet Size: "+context.authReply.maxPacketSize);
+        this.logger.debug("   User: "+context.authReply.username);
+        this.logger.debug("   Schema: "+context.authReply.schema);
         
         this.logger.debug("   Client Capability Flags: "
-                          + Plugin_Debug.dump_capability_flags(context.clientCapabilityFlags));
+                          + Plugin_Debug.dump_capability_flags(context.authReply.capabilityFlags));
     }
     
     public void read_query(Proxy context) {
-        switch (context.packetType) {
+        switch (MySQL_Packet.getType(context.get_packet())) {
             case MySQL_Flags.COM_QUIT:
                 this.logger.info("-> COM_QUIT");
                 break;
@@ -49,25 +49,20 @@ public class Plugin_Debug extends Plugin_Base {
                 break;
             
             default:
-                this.logger.debug("Packet is "+context.packetType+" type.");
+                this.logger.debug("Packet is "+MySQL_Packet.getType(context.get_packet())+" type.");
                 Plugin_Debug.dump_buffer(context);
                 break;
         }
+        context.buffer_result_set();
     }
     
     public void read_query_result(Proxy context) {
-        switch (context.packetType) {
+        if (!context.bufferResultSet)
+            return;
+        
+        switch (MySQL_Packet.getType(context.get_packet())) {
             case MySQL_Flags.OK:
                 this.logger.info("<- OK");
-                if (context.affectedRows > 0)
-                    this.logger.debug("   Affected rows: "+context.affectedRows);
-                if (context.lastInsertId > 0)
-                    this.logger.debug("   Inserted id: "+context.lastInsertId);
-                if (context.warnings > 0)
-                    this.logger.debug("   Warnings: "+context.warnings);
-
-                this.logger.debug("   Status Flags: "
-                                  + Plugin_Debug.dump_status_flags(context.statusFlags));
                 break;
             
             case MySQL_Flags.ERR:
@@ -75,7 +70,7 @@ public class Plugin_Debug extends Plugin_Base {
                 break;
             
             default:
-                this.logger.debug("Result set or Packet is "+context.packetType+" type.");
+                this.logger.debug("Result set or Packet is "+MySQL_Packet.getType(context.get_packet())+" type.");
                 break;
         }
     }

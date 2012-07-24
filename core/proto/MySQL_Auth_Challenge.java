@@ -29,6 +29,10 @@ public class MySQL_Auth_Challenge extends MySQL_Packet {
         this.capabilityFlags ^= flag;
     }
     
+    public boolean hasCapabilityFlag(long flag) {
+        return ((this.capabilityFlags & flag) == flag);
+    }
+    
     public void setStatusFlag(long flag) {
         this.statusFlags |= flag;
     }
@@ -39,6 +43,10 @@ public class MySQL_Auth_Challenge extends MySQL_Packet {
     
     public void toggleStatusFlag(long flag) {
         this.statusFlags ^= flag;
+    }
+    
+    public boolean hasStatusFlag(long flag) {
+        return ((this.statusFlags & flag) == flag);
     }
     
     public ArrayList<byte[]> getPayload() {
@@ -54,11 +62,56 @@ public class MySQL_Auth_Challenge extends MySQL_Packet {
         payload.add( MySQL_Proto.build_fixed_int(2, this.statusFlags));
         payload.add( MySQL_Proto.build_fixed_str(13, ""));
         
-        if ((this.capabilityFlags & MySQL_Flags.CLIENT_SECURE_CONNECTION) != 0) {
+        if (this.hasCapabilityFlag(MySQL_Flags.CLIENT_SECURE_CONNECTION)) {
             payload.add( MySQL_Proto.build_fixed_str(12, this.challenge2));
             payload.add( MySQL_Proto.build_filler(1));
         }
         
         return payload;
+    }
+    
+    public static MySQL_Auth_Challenge loadFromPacket(byte[] packet) {
+        MySQL_Auth_Challenge obj = new MySQL_Auth_Challenge();
+        int offset = 3;
+        
+        obj.sequenceId = MySQL_Proto.get_fixed_int(packet, offset, 1);
+        offset += MySQL_Proto.get_offset_offset();
+        
+        obj.protocolVersion = MySQL_Proto.get_fixed_int(packet, offset, 1);
+        offset += MySQL_Proto.get_offset_offset();
+        
+        obj.serverVersion = MySQL_Proto.get_null_str(packet, offset);
+        offset += MySQL_Proto.get_offset_offset();
+        
+        obj.connectionId = MySQL_Proto.get_fixed_int(packet, offset, 4);
+        offset += MySQL_Proto.get_offset_offset();
+        
+        obj.challenge1 = MySQL_Proto.get_fixed_str(packet, offset, 8);
+        offset += MySQL_Proto.get_offset_offset();
+        
+        MySQL_Proto.get_fixed_str(packet, offset, 1);
+        offset += MySQL_Proto.get_offset_offset();
+        
+        obj.capabilityFlags = MySQL_Proto.get_fixed_int(packet, offset, 2);
+        offset += MySQL_Proto.get_offset_offset();
+        
+        obj.characterSet = MySQL_Proto.get_fixed_int(packet, offset, 1);
+        offset += MySQL_Proto.get_offset_offset();
+        
+        obj.statusFlags = MySQL_Proto.get_fixed_int(packet, offset, 2);
+        offset += MySQL_Proto.get_offset_offset();
+        
+        MySQL_Proto.get_fixed_str(packet, offset, 13);
+        offset += MySQL_Proto.get_offset_offset();
+        
+        if (obj.hasCapabilityFlag(MySQL_Flags.CLIENT_SECURE_CONNECTION)) {
+            obj.challenge2 = MySQL_Proto.get_fixed_str(packet, offset, 12);
+            offset += MySQL_Proto.get_offset_offset();
+            
+            MySQL_Proto.get_fixed_str(packet, offset, 1);
+            offset += MySQL_Proto.get_offset_offset();
+        }
+        
+        return obj;
     }
 }
