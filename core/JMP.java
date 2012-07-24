@@ -16,15 +16,9 @@ public class JMP {
         Logger logger = Logger.getLogger("JMP");
         PropertyConfigurator.configure(System.getProperty("logConf"));
         
-        String[] hosts = System.getProperty("Hosts").split(",");
-        for (String host: hosts) {
-            String[] hostInfo = host.split(":");
-            
-            int port = Integer.parseInt(hostInfo[0]);
-            String mysqlHost = hostInfo[1];
-            int mysqlPort = Integer.parseInt(hostInfo[2]);
-            
-            JMP_Thread thread = new JMP_Thread(port, mysqlHost, mysqlPort);
+        String[] ports = System.getProperty("ports").split(",");
+        for (String port: ports) {
+            JMP_Thread thread = new JMP_Thread(Integer.parseInt(port));
             thread.setName("Listener: "+port);
             thread.start();
             threads.add(thread);

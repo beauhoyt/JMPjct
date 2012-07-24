@@ -11,15 +11,18 @@ PROXYOPT=""
 CLASSPATH=""
 
 # Connection options
-PROXYOPT="${PROXYOPT} -DHosts=5050:127.0.0.1:3306"
+PROXYOPT="${PROXYOPT} -Dports=5050,5051"
 
 # Logging Config File
 PROXYOPT="${PROXYOPT} -DlogConf=conf/log.conf"
 
 # Plugins
-#PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug,Plugin_Example"
-#PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug"
-PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Proxy"
+#PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Proxy,Plugin_Debug,Plugin_Example"
+#PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Proxy,Plugin_Debug"
+PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Proxy,Plugin_Ehcache"
+
+# Proxy
+PROXYOPT="${PROXYOPT} -DproxyHosts=5050:127.0.0.1:3306,5051:127.0.0.1:3306"
 
 # Ehcache
 PROXYOPT="${PROXYOPT} -DehcacheConf=conf/ehcache.xml"

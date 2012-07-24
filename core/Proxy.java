@@ -11,12 +11,14 @@ import org.apache.log4j.Logger;
 public class Proxy extends Thread {
     public Logger logger = Logger.getLogger("Proxy");
     
+    int port = 0;
+    
     public Socket clientSocket = null;
     public InputStream clientIn = null;
     public OutputStream clientOut = null;
     
     // Plugins
-    public ArrayList<Proxy_Plugin> plugins = new ArrayList<Proxy_Plugin>();
+    public ArrayList<Plugin_Base> plugins = new ArrayList<Plugin_Base>();
     
     // Packet Buffer. ArrayList so we can grow/shrink dynamically
     public ArrayList<byte[]> buffer = new ArrayList<byte[]>();
@@ -46,7 +48,8 @@ public class Proxy extends Thread {
     // Allow plugins to muck with the modes
     public int nextMode = MySQL_Flags.MODE_INIT;
     
-    public Proxy(Socket clientSocket, String mysqlHost, int mysqlPort, ArrayList<Proxy_Plugin> plugins) throws IOException {
+    public Proxy(int port, Socket clientSocket, ArrayList<Plugin_Base> plugins) throws IOException {
+        this.port = port;
         this.clientSocket = clientSocket;
         this.plugins = plugins;
         
@@ -61,83 +64,83 @@ public class Proxy extends Thread {
                     case MySQL_Flags.MODE_INIT:
                         this.logger.trace("MODE_INIT");
                         this.nextMode = MySQL_Flags.MODE_READ_HANDSHAKE;
-                        for (Proxy_Plugin plugin : this.plugins)
+                        for (Plugin_Base plugin : this.plugins)
                             plugin.init(this);
                     
                     case MySQL_Flags.MODE_READ_HANDSHAKE:
                         this.logger.trace("MODE_READ_HANDSHAKE");
                         this.nextMode = MySQL_Flags.MODE_SEND_HANDSHAKE;
-                        for (Proxy_Plugin plugin : this.plugins)
+                        for (Plugin_Base plugin : this.plugins)
                             plugin.read_handshake(this);
                         break;
                     
                     case MySQL_Flags.MODE_SEND_HANDSHAKE:
                         this.logger.trace("MODE_SEND_HANDSHAKE");
                         this.nextMode = MySQL_Flags.MODE_READ_AUTH;
-                        for (Proxy_Plugin plugin : this.plugins)
+                        for (Plugin_Base plugin : this.plugins)
                             plugin.send_handshake(this);
                         break;
                     
                     case MySQL_Flags.MODE_READ_AUTH:
                         this.logger.trace("MODE_READ_AUTH");
                         this.nextMode = MySQL_Flags.MODE_SEND_AUTH;
-                        for (Proxy_Plugin plugin : this.plugins)
+                        for (Plugin_Base plugin : this.plugins)
                             plugin.read_auth(this);
                         break;
                     
                     case MySQL_Flags.MODE_SEND_AUTH:
                         this.logger.trace("MODE_SEND_AUTH");
                         this.nextMode = MySQL_Flags.MODE_READ_AUTH_RESULT;
-                        for (Proxy_Plugin plugin : this.plugins)
+                        for (Plugin_Base plugin : this.plugins)
                             plugin.send_auth(this);
                         break;
                     
                     case MySQL_Flags.MODE_READ_AUTH_RESULT:
                         this.logger.trace("MODE_READ_AUTH_RESULT");
                         this.nextMode = MySQL_Flags.MODE_SEND_AUTH_RESULT;
-                        for (Proxy_Plugin plugin : this.plugins)
+                        for (Plugin_Base plugin : this.plugins)
                             plugin.read_auth_result(this);
                         break;
                     
                     case MySQL_Flags.MODE_SEND_AUTH_RESULT:
                         this.logger.trace("MODE_SEND_AUTH_RESULT");
                         this.nextMode = MySQL_Flags.MODE_READ_QUERY;
-                        for (Proxy_Plugin plugin : this.plugins)
+                        for (Plugin_Base plugin : this.plugins)
                             plugin.send_auth_result(this);
                         break;
                     
                     case MySQL_Flags.MODE_READ_QUERY:
                         this.logger.trace("MODE_READ_QUERY");
                         this.nextMode = MySQL_Flags.MODE_SEND_QUERY;
-                        for (Proxy_Plugin plugin : this.plugins)
+                        for (Plugin_Base plugin : this.plugins)
                             plugin.read_query(this);
                         break;
                     
                     case MySQL_Flags.MODE_SEND_QUERY:
                         this.logger.trace("MODE_SEND_QUERY");
                         this.nextMode = MySQL_Flags.MODE_READ_QUERY_RESULT;
-                        for (Proxy_Plugin plugin : this.plugins)
+                        for (Plugin_Base plugin : this.plugins)
                             plugin.send_query(this);
                         break;
                     
                     case MySQL_Flags.MODE_READ_QUERY_RESULT:
                         this.logger.trace("MODE_READ_QUERY_RESULT");
                         this.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
-                        for (Proxy_Plugin plugin : this.plugins)
+                        for (Plugin_Base plugin : this.plugins)
                             plugin.read_query_result(this);
                         break;
                     
                     case MySQL_Flags.MODE_SEND_QUERY_RESULT:
                         this.logger.trace("MODE_SEND_QUERY_RESULT");
                         this.nextMode = MySQL_Flags.MODE_READ_QUERY;
-                        for (Proxy_Plugin plugin : this.plugins)
+                        for (Plugin_Base plugin : this.plugins)
                             plugin.send_query_result(this);
                         break;
                     
                     case MySQL_Flags.MODE_CLEANUP:
                         this.logger.trace("MODE_CLEANUP");
                         this.nextMode = MySQL_Flags.MODE_CLEANUP;
-                        for (Proxy_Plugin plugin : this.plugins)
+                        for (Plugin_Base plugin : this.plugins)
                             plugin.cleanup(this);
                         this.halt();
                         break;
@@ -161,7 +164,7 @@ public class Proxy extends Thread {
             catch (IOException e) {}
             
             try {
-                for (Proxy_Plugin plugin : this.plugins)
+                for (Plugin_Base plugin : this.plugins)
                             plugin.cleanup(this);
             }
             catch (IOException e) {}

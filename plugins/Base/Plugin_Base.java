@@ -5,7 +5,7 @@
 import org.apache.log4j.Logger;
 import java.io.*;
 
-public abstract class Plugin_Base implements Proxy_Plugin {
+public abstract class Plugin_Base {
     public Logger logger = Logger.getLogger("Plugin.Base");
     
     public void init(Proxy context) throws IOException {}

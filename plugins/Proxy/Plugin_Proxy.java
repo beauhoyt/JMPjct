@@ -83,7 +83,6 @@ public class Plugin_Proxy extends Plugin_Base {
         context.buffer.add(packet);
         if (MySQL_Packet.getType(packet) != MySQL_Flags.OK) {
             this.logger.fatal("Auth is not okay!");
-            context.halt();
         }
     }
     
