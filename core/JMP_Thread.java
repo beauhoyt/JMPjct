@@ -57,7 +57,7 @@ public class JMP_Thread extends Thread {
                 }
             }
             try {
-                new Proxy(this.port, this.listener.accept(), plugins).start();
+                new Engine(this.port, this.listener.accept(), plugins).start();
             }
             catch (java.io.IOException e) {
                 this.logger.fatal("Accept fatal "+e);

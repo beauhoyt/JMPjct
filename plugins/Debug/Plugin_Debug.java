@@ -9,7 +9,7 @@ import org.apache.log4j.Logger;
 public class Plugin_Debug extends Plugin_Base {
     public Logger logger = Logger.getLogger("Plugin.Debug");
     
-    public void read_handshake(Proxy context) {
+    public void read_handshake(Engine context) {
         this.logger.debug("<- AuthChallengePacket");
         this.logger.debug("   Server Version: "+context.authChallenge.serverVersion);
         this.logger.debug("   Connection Id: "+context.authChallenge.connectionId);
@@ -17,7 +17,7 @@ public class Plugin_Debug extends Plugin_Base {
                           + Plugin_Debug.dump_capability_flags(context.authChallenge.capabilityFlags));
     }
     
-    public void read_auth(Proxy context) {
+    public void read_auth(Engine context) {
         this.logger.debug("-> AuthResponsePacket");
         this.logger.debug("   Max Packet Size: "+context.authReply.maxPacketSize);
         this.logger.debug("   User: "+context.authReply.username);
@@ -27,7 +27,7 @@ public class Plugin_Debug extends Plugin_Base {
                           + Plugin_Debug.dump_capability_flags(context.authReply.capabilityFlags));
     }
     
-    public void read_query(Proxy context) {
+    public void read_query(Engine context) {
         switch (MySQL_Packet.getType(context.buffer.get(context.buffer.size()-1))) {
             case MySQL_Flags.COM_QUIT:
                 this.logger.info("-> COM_QUIT");
@@ -51,7 +51,7 @@ public class Plugin_Debug extends Plugin_Base {
         context.buffer_result_set();
     }
     
-    public void read_query_result(Proxy context) {
+    public void read_query_result(Engine context) {
         if (!context.bufferResultSet)
             return;
         
@@ -81,7 +81,7 @@ public class Plugin_Debug extends Plugin_Base {
         }
     }
     
-    public static final void dump_buffer(Proxy context) {
+    public static final void dump_buffer(Engine context) {
         Logger logger = Logger.getLogger("Plugin.Debug");
         
         if (!logger.isTraceEnabled())

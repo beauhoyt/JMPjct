@@ -32,7 +32,7 @@ public class Plugin_Ehcache extends Plugin_Base {
     }
     
     @SuppressWarnings("unchecked")
-    public void read_query(Proxy context) {
+    public void read_query(Engine context) {
         if (Plugin_Ehcache.cache == null)
             return;
         
@@ -239,7 +239,7 @@ public class Plugin_Ehcache extends Plugin_Base {
         }
     }
     
-    public void read_query_result(Proxy context) {
+    public void read_query_result(Engine context) {
         if (Plugin_Ehcache.cache == null)
             return;
         

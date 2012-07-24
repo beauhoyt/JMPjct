@@ -8,8 +8,8 @@ import java.io.*;
 import java.util.*;
 import org.apache.log4j.Logger;
 
-public class Proxy extends Thread {
-    public Logger logger = Logger.getLogger("Proxy");
+public class Engine extends Thread {
+    public Logger logger = Logger.getLogger("Engine");
     
     int port = 0;
     
@@ -48,7 +48,7 @@ public class Proxy extends Thread {
     // Allow plugins to muck with the modes
     public int nextMode = MySQL_Flags.MODE_INIT;
     
-    public Proxy(int port, Socket clientSocket, ArrayList<Plugin_Base> plugins) throws IOException {
+    public Engine(int port, Socket clientSocket, ArrayList<Plugin_Base> plugins) throws IOException {
         this.port = port;
         this.clientSocket = clientSocket;
         this.plugins = plugins;
