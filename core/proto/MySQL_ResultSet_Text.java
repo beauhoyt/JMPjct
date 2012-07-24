@@ -15,6 +15,7 @@ public class MySQL_ResultSet_Text {
     public ArrayList<MySQL_Row> rows = new ArrayList<MySQL_Row>();
     
     public ArrayList<byte[]> toPackets() {
+        this.logger.trace("toPackets");
         ArrayList<byte[]> packets = new ArrayList<byte[]>();
         
         long maxRowSize = 0;

@@ -19,7 +19,7 @@ PROXYOPT="${PROXYOPT} -DlogConf=conf/log.conf"
 # Plugins
 #PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug,Plugin_Example"
 #PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug"
-PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Debug,Plugin_Ehcache"
+PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Proxy"
 
 # Ehcache
 PROXYOPT="${PROXYOPT} -DehcacheConf=conf/ehcache.xml"

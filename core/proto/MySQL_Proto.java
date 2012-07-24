@@ -9,6 +9,7 @@ public class MySQL_Proto {
     public static int offsetOffset = 0;
     
     public static byte[] build_fixed_int(int size, long value) {
+        MySQL_Proto.logger.trace("build_fixed_int");
         byte[] packet = new byte[size];
         
         if (size == 8) {
@@ -47,6 +48,7 @@ public class MySQL_Proto {
     }
     
     public static byte[] build_lenenc_int(long value) {
+        MySQL_Proto.logger.trace("build_lenenc_int");
         byte[] packet = null;
         
         if (value < 251) {
@@ -83,6 +85,7 @@ public class MySQL_Proto {
     }
     
     public static byte[] build_lenenc_str(String str) {
+        MySQL_Proto.logger.trace("build_lenenc_str");
         if (str.equals("")) {
             byte[] packet = new byte[1];
             packet[0] = 0x00;
@@ -98,10 +101,12 @@ public class MySQL_Proto {
     }
     
     public static byte[] build_null_str(String str) {
+        MySQL_Proto.logger.trace("build_null_str");
         return MySQL_Proto.build_fixed_str(str.length() + 1, str);
     }
     
     public static byte[] build_fixed_str(int size, String str) {
+        MySQL_Proto.logger.trace("build_fixed_str");
         byte[] packet = new byte[size];
         byte[] strByte = str.getBytes();
         if (strByte.length < packet.length)
@@ -111,6 +116,7 @@ public class MySQL_Proto {
     }
     
     public static byte[] build_filler(int len) {
+        MySQL_Proto.logger.trace("build_filler");
         byte[] filler = new byte[len];
         for (int i = 0; i < len; i++)
             filler[i] = 0x00;
@@ -118,26 +124,31 @@ public class MySQL_Proto {
     }
     
     public static byte[] build_byte(byte value) {
+        MySQL_Proto.logger.trace("build_byte");
         byte[] field = new byte[1];
         field[0] = value;
         return field;
     }
     
     public static char int2char(byte i) {
+        MySQL_Proto.logger.trace("int2char");
         return (char)i;
     }
     
     public static byte char2int(char i) {
+        MySQL_Proto.logger.trace("char2int");
         return (byte)i;
     }
     
     public static int get_offset_offset() {
+        MySQL_Proto.logger.trace("get_offset_offset");
         int offsetOffset = MySQL_Proto.offsetOffset;
         MySQL_Proto.offsetOffset = 0;
         return offsetOffset;
     }
     
     public static long get_fixed_int(byte[] packet, int offset, int size) {
+        MySQL_Proto.logger.trace("get_fixed_int");
         byte[] bytes = null;
         
         if ( packet.length < (size + offset))
@@ -150,6 +161,7 @@ public class MySQL_Proto {
     }
     
     public static long get_fixed_int(byte[] bytes) {
+        MySQL_Proto.logger.trace("get_fixed_int");
         long value = 0;
         
         for (int i = bytes.length-1; i > 0; i--) {
@@ -162,6 +174,7 @@ public class MySQL_Proto {
     }
     
     public static long get_lenenc_int(byte[] packet, int offset) {
+        MySQL_Proto.logger.trace("get_lenenc_int");
         int size = 0;
         
         // 1 byte int
@@ -193,6 +206,7 @@ public class MySQL_Proto {
     }
     
     public static String get_fixed_str(byte[] packet, int offset, int len) {
+        MySQL_Proto.logger.trace("get_fixed_str");
         String str = "";
         
         for (int i = offset; i < (offset+len); i++) {
@@ -204,6 +218,7 @@ public class MySQL_Proto {
     }
     
     public static String get_null_str(byte[] packet, int offset) {
+        MySQL_Proto.logger.trace("get_null_str");
         String str = "";
         
         for (int i = offset; i < packet.length; i++) {
@@ -219,6 +234,7 @@ public class MySQL_Proto {
     }
     
     public static String get_eop_str(byte[] packet, int offset) {
+        MySQL_Proto.logger.trace("get_eop_str");
         String str = "";
         
         for (int i = offset; i < packet.length; i++) {
@@ -234,6 +250,7 @@ public class MySQL_Proto {
     }
     
     public static String get_lenenc_str(byte[] packet, int offset) {
+        MySQL_Proto.logger.trace("get_lenenc_str");
         String str = "";
         int i = 0;
         int offsetOffset = 0;

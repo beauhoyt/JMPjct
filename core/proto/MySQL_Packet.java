@@ -3,6 +3,8 @@
  */
 
 import java.util.*;
+import java.io.*;
+import org.apache.commons.io.*;
 import org.apache.log4j.Logger;
 
 public abstract class MySQL_Packet {
@@ -13,6 +15,7 @@ public abstract class MySQL_Packet {
     public abstract ArrayList<byte[]> getPayload();
     
     public byte[] toPacket() {
+        this.logger.trace("toPacket");
         ArrayList<byte[]> payload = this.getPayload();
         
         int size = 0;
@@ -33,19 +36,38 @@ public abstract class MySQL_Packet {
         return packet;
     }
     
-    public static long getSize(byte[] packet) {
-        long size = MySQL_Proto.get_fixed_int(packet, 0, 3);
+    public static int getSize(byte[] packet) {
+        Logger.getLogger("MySQL.Packet").trace("getSize");
+        int size = (int)MySQL_Proto.get_fixed_int(packet, 0, 3);
         MySQL_Proto.get_offset_offset();
         Logger.getLogger("MySQL.Packet").trace("Packet size is "+size);
         return size;
     }
     
     public static byte getType(byte[] packet) {
+        Logger.getLogger("MySQL.Packet").trace("getType");
         return packet[4];
     }
     
     public static long getSequenceId(byte[] packet) {
+        Logger.getLogger("MySQL.Packet").trace("getSequenceId");
         return MySQL_Proto.get_fixed_int(packet, 3, 1);
+    }
+    
+    public static final void dump(byte[] packet) {
+        Logger logger = Logger.getLogger("MySQL.Packet");
+        
+        if (!logger.isTraceEnabled())
+            return;
+        
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            HexDump.dump(packet, 0, out, 0);
+            logger.trace("Dumping packet\n"+out.toString());
+        }
+        catch (IOException e) {
+            return;
+        }
     }
     
 }

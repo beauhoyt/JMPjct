@@ -17,6 +17,7 @@ public class MySQL_ERR extends MySQL_Packet {
     public String errorMessage = "";
     
     public ArrayList<byte[]> getPayload() {
+        this.logger.trace("getPayload");
         ArrayList<byte[]> payload = new ArrayList<byte[]>();
         
         payload.add(MySQL_Proto.build_byte(MySQL_Flags.ERR));

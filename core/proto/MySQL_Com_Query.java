@@ -11,6 +11,7 @@ public class MySQL_Com_Query extends MySQL_Packet {
     public String query = "";
     
     public ArrayList<byte[]> getPayload() {
+        this.logger.trace("getPayload");
         ArrayList<byte[]> payload = new ArrayList<byte[]>();
         
         payload.add(MySQL_Proto.build_byte(MySQL_Flags.COM_QUERY));
@@ -20,6 +21,7 @@ public class MySQL_Com_Query extends MySQL_Packet {
     }
 
     public static MySQL_Com_Query loadFromPacket(byte[] packet) {
+        Logger.getLogger("MySQL.Com.Query").trace("loadFromPacket");
         MySQL_Com_Query obj = new MySQL_Com_Query();
         int offset = 3;
         

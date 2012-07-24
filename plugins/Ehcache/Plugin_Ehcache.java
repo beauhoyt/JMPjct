@@ -56,7 +56,7 @@ public class Plugin_Ehcache extends Plugin_Base {
         }
         
         query = query.substring(query.indexOf("*/")+2).trim();
-        this.key = context.mysqlHost+":"+context.mysqlPort+"/"+context.schema+"/"+query;
+        this.key = context.schema+":"+query;
         
         this.logger.info("Cache Key: '"+this.key+"'");
         this.logger.trace("Command: '"+command+"'"+" value: '"+value+"'");

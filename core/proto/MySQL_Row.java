@@ -66,6 +66,7 @@ public class MySQL_Row extends MySQL_Packet {
     // Add other addData for other types here
     
     public ArrayList<byte[]> getPayload() {
+        this.logger.trace("getPayload");
         ArrayList<byte[]> payload = new ArrayList<byte[]>();
         
         for (Object obj: this.data) {

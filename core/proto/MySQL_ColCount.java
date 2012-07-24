@@ -11,6 +11,7 @@ public class MySQL_ColCount extends MySQL_Packet {
     public long colCount = 0;
     
     public ArrayList<byte[]> getPayload() {
+        this.logger.trace("getPayload");
         ArrayList<byte[]> payload = new ArrayList<byte[]>();
         
         payload.add(MySQL_Proto.build_lenenc_int(this.colCount));
@@ -19,6 +20,7 @@ public class MySQL_ColCount extends MySQL_Packet {
     }
     
     public static MySQL_ColCount loadFromPacket(byte[] packet) {
+        Logger.getLogger("MySQL.ColCount").trace("loadFromPacket");
         MySQL_ColCount obj = new MySQL_ColCount();
         int offset = 3;
         

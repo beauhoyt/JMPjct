@@ -11,6 +11,7 @@ public class MySQL_Com_Processkill extends MySQL_Packet {
     public long connectionId = 0;
     
     public ArrayList<byte[]> getPayload() {
+        this.logger.trace("getPayload");
         ArrayList<byte[]> payload = new ArrayList<byte[]>();
         
         payload.add(MySQL_Proto.build_byte(MySQL_Flags.COM_PROCESS_KILL));

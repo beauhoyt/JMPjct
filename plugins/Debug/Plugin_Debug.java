@@ -3,16 +3,10 @@
  * Output packet debugging information
  */
 
-import java.io.*;
-import org.apache.commons.io.*;
 import org.apache.log4j.Logger;
 
 public class Plugin_Debug extends Plugin_Base {
     public Logger logger = Logger.getLogger("Plugin.Debug");
-    
-    public void init(Proxy context) {
-        this.logger.info("Connected to mysql server at "+context.mysqlHost+":"+context.mysqlPort);
-    }
     
     public void read_handshake(Proxy context) {
         this.logger.debug("<- AuthChallengePacket");
@@ -82,23 +76,7 @@ public class Plugin_Debug extends Plugin_Base {
             return;
         
         for (byte[] packet: context.buffer) {
-            Plugin_Debug.dump_packet(packet);
-        }
-    }
-    
-    public static final void dump_packet(byte[] packet) {
-        Logger logger = Logger.getLogger("Plugin.Debug");
-        
-        if (!logger.isTraceEnabled())
-            return;
-        
-        try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            HexDump.dump(packet, 0, out, 0);
-            logger.trace("Dumping packet\n"+out.toString());
-        }
-        catch (IOException e) {
-            return;
+            MySQL_Packet.dump(packet);
         }
     }
     

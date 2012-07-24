@@ -11,6 +11,7 @@ public class MySQL_Com_Quit extends MySQL_Packet {
     public String query = "";
     
     public ArrayList<byte[]> getPayload() {
+        this.logger.trace("getPayload");
         ArrayList<byte[]> payload = new ArrayList<byte[]>();
         
         payload.add(MySQL_Proto.build_byte(MySQL_Flags.COM_QUIT));

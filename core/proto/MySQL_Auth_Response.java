@@ -32,6 +32,7 @@ public class MySQL_Auth_Response extends MySQL_Packet {
     }
     
     public ArrayList<byte[]> getPayload() {
+        this.logger.trace("getPayload");
         ArrayList<byte[]> payload = new ArrayList<byte[]>();
         
         if ((this.capabilityFlags & MySQL_Flags.CLIENT_PROTOCOL_41) != 0) {
@@ -57,6 +58,7 @@ public class MySQL_Auth_Response extends MySQL_Packet {
     }
     
     public static MySQL_Auth_Response loadFromPacket(byte[] packet) {
+        Logger.getLogger("MySQL.Auth.Response").trace("loadFromPacket");
         MySQL_Auth_Response obj = new MySQL_Auth_Response();
         int offset = 3;
         

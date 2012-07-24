@@ -11,6 +11,7 @@ public class MySQL_Com_Initdb extends MySQL_Packet {
     public String schema = "";
     
     public ArrayList<byte[]> getPayload() {
+        this.logger.trace("getPayload");
         ArrayList<byte[]> payload = new ArrayList<byte[]>();
         
         payload.add(MySQL_Proto.build_byte(MySQL_Flags.COM_INIT_DB));
@@ -20,6 +21,7 @@ public class MySQL_Com_Initdb extends MySQL_Packet {
     }
     
     public static MySQL_Com_Initdb loadFromPacket(byte[] packet) {
+        Logger.getLogger("MySQL.Com.Initdb").trace("loadFromPacket");
         MySQL_Com_Initdb obj = new MySQL_Com_Initdb();
         int offset = 3;
         

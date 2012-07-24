@@ -27,6 +27,7 @@ public class MySQL_Column extends MySQL_Packet {
     }
     
     public ArrayList<byte[]> getPayload() {
+        this.logger.trace("getPayload");
         ArrayList<byte[]> payload = new ArrayList<byte[]>();
         
         payload.add(MySQL_Proto.build_lenenc_str(this.catalog));

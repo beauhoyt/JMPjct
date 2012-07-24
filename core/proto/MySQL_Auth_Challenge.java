@@ -50,6 +50,7 @@ public class MySQL_Auth_Challenge extends MySQL_Packet {
     }
     
     public ArrayList<byte[]> getPayload() {
+        this.logger.trace("getPayload");
         ArrayList<byte[]> payload = new ArrayList<byte[]>();
         
         payload.add( MySQL_Proto.build_fixed_int(1, this.protocolVersion));
@@ -71,6 +72,7 @@ public class MySQL_Auth_Challenge extends MySQL_Packet {
     }
     
     public static MySQL_Auth_Challenge loadFromPacket(byte[] packet) {
+        Logger.getLogger("MySQL.Auth.Challenge").trace("loadFromPacket");
         MySQL_Auth_Challenge obj = new MySQL_Auth_Challenge();
         int offset = 3;
         
