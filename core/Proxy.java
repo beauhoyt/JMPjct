@@ -20,7 +20,6 @@ public class Proxy extends Thread {
     
     // Packet Buffer. ArrayList so we can grow/shrink dynamically
     public ArrayList<byte[]> buffer = new ArrayList<byte[]>();
-    public int packet_id = 0;
     public int offset = 0;
     
     // Stop the thread?
@@ -182,41 +181,10 @@ public class Proxy extends Thread {
     public void clear_buffer() {
         this.logger.trace("Clearing Buffer.");
         this.offset = 0;
-        this.packet_id = 0;
         
         // With how ehcache works, if we clear the buffer via .clear(), it also
         // clears the cached value. Create a new ArrayList and count on java
         // cleaning up after ourselves.
         this.buffer = new ArrayList<byte[]>();
-    }
-    
-    public byte[] get_packet(int packet_id) {
-        if (packet_id >= this.buffer.size()) {
-            this.logger.trace("Packet id "+packet_id+" is null!");
-            this.halt();
-            return null;
-        }
-        
-        return this.buffer.get(packet_id);
-    }
-    
-    public byte[] get_packet() {
-        return this.get_packet(this.packet_id);
-    }
-    
-    public void read_full_result_set(InputStream in, OutputStream out) throws IOException {
-        this.buffer = MySQL_Packet.read_full_result_set(in, out, this.buffer, true);
-    }
-    
-    public byte[] read_packet(InputStream in) throws IOException {
-        byte[] packet = MySQL_Packet.read_packet(in);
-        this.packet_id = this.buffer.size();
-        this.buffer.add(packet);
-        return packet;
-    }
-    
-    public void write(OutputStream out) throws IOException {
-        this.logger.trace("write");
-        MySQL_Packet.write(out, this.buffer);
     }
 }

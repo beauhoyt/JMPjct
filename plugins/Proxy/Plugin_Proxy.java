@@ -31,7 +31,7 @@ public class Plugin_Proxy extends Plugin_Base {
     
     public void read_handshake(Proxy context) throws IOException {
         this.logger.trace("read_handshake");
-        byte[] packet = context.read_packet(this.mysqlIn);
+        byte[] packet = MySQL_Packet.read_packet(this.mysqlIn);
         
         context.authChallenge = MySQL_Auth_Challenge.loadFromPacket(packet);
         
@@ -43,18 +43,19 @@ public class Plugin_Proxy extends Plugin_Base {
         MySQL_ResultSet_Text.characterSet = context.authChallenge.characterSet;
         
         // Set Replace the packet in the buffer
-        context.buffer.set(context.packet_id, context.authChallenge.toPacket());
+        context.buffer.add(context.authChallenge.toPacket());
     }
     
     public void send_handshake(Proxy context) throws IOException {
         this.logger.trace("send_handshake");
-        context.write(context.clientOut);
+        MySQL_Packet.write(context.clientOut, context.buffer);
         context.clear_buffer();
     }
     
     public void read_auth(Proxy context) throws IOException {
         this.logger.trace("read_auth");
-        byte[] packet = context.read_packet(context.clientIn);
+        byte[] packet = MySQL_Packet.read_packet(context.clientIn);
+        context.buffer.add(packet);
         
         context.authReply = MySQL_Auth_Response.loadFromPacket(packet);
         
@@ -72,13 +73,14 @@ public class Plugin_Proxy extends Plugin_Base {
     
     public void send_auth(Proxy context) throws IOException {
         this.logger.trace("send_auth");
-        context.write(this.mysqlOut);
+        MySQL_Packet.write(this.mysqlOut, context.buffer);
         context.clear_buffer();
     }
     
     public void read_auth_result(Proxy context) throws IOException {
         this.logger.trace("read_auth_result");
-        byte[] packet = context.read_packet(this.mysqlIn);
+        byte[] packet = MySQL_Packet.read_packet(this.mysqlIn);
+        context.buffer.add(packet);
         if (MySQL_Packet.getType(packet) != MySQL_Flags.OK) {
             this.logger.fatal("Auth is not okay!");
             context.halt();
@@ -87,7 +89,7 @@ public class Plugin_Proxy extends Plugin_Base {
     
     public void send_auth_result(Proxy context) throws IOException {
         this.logger.trace("read_auth_result");
-        context.write(context.clientOut);
+        MySQL_Packet.write(context.clientOut, context.buffer);
         context.clear_buffer();
     }
     
@@ -95,7 +97,8 @@ public class Plugin_Proxy extends Plugin_Base {
         this.logger.trace("read_query");
         context.bufferResultSet = false;
         
-        byte[] packet = context.read_packet(context.clientIn);
+        byte[] packet = MySQL_Packet.read_packet(context.clientIn);
+        context.buffer.add(packet);
         
         context.sequenceId = MySQL_Packet.getSequenceId(packet);
         this.logger.trace("Client sequenceId: "+context.sequenceId);
@@ -125,14 +128,15 @@ public class Plugin_Proxy extends Plugin_Base {
     
     public void send_query(Proxy context) throws IOException {
         this.logger.trace("send_query");
-        context.write(this.mysqlOut);
+        MySQL_Packet.write(this.mysqlOut, context.buffer);
         context.clear_buffer();
     }
     
     public void read_query_result(Proxy context) throws IOException {
         this.logger.trace("read_query_result");
         
-        byte[] packet = context.read_packet(this.mysqlIn);
+        byte[] packet = MySQL_Packet.read_packet(this.mysqlIn);
+        context.buffer.add(packet);
         
         context.sequenceId = MySQL_Packet.getSequenceId(packet);
         
@@ -142,14 +146,14 @@ public class Plugin_Proxy extends Plugin_Base {
                 break;
             
             default:
-                context.read_full_result_set(this.mysqlIn, context.clientOut);
+                context.buffer = MySQL_Packet.read_full_result_set(this.mysqlIn, context.clientOut, context.buffer, context.bufferResultSet);
                 break;
         }
     }
     
     public void send_query_result(Proxy context) throws IOException {
         this.logger.trace("send_query_result");
-        context.write(context.clientOut);
+        MySQL_Packet.write(context.clientOut, context.buffer);
         context.clear_buffer();
     }
     

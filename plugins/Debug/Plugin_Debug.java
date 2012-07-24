@@ -28,7 +28,7 @@ public class Plugin_Debug extends Plugin_Base {
     }
     
     public void read_query(Proxy context) {
-        switch (MySQL_Packet.getType(context.get_packet())) {
+        switch (MySQL_Packet.getType(context.buffer.get(context.buffer.size()-1))) {
             case MySQL_Flags.COM_QUIT:
                 this.logger.info("-> COM_QUIT");
                 break;
@@ -44,7 +44,7 @@ public class Plugin_Debug extends Plugin_Base {
                 break;
             
             default:
-                this.logger.debug("Packet is "+MySQL_Packet.getType(context.get_packet())+" type.");
+                this.logger.debug("Packet is "+MySQL_Packet.getType(context.buffer.get(context.buffer.size()-1))+" type.");
                 Plugin_Debug.dump_buffer(context);
                 break;
         }
@@ -55,7 +55,7 @@ public class Plugin_Debug extends Plugin_Base {
         if (!context.bufferResultSet)
             return;
         
-        switch (MySQL_Packet.getType(context.get_packet())) {
+        switch (MySQL_Packet.getType(context.buffer.get(context.buffer.size()-1))) {
             case MySQL_Flags.OK:
                 this.logger.info("<- OK");
                 break;
@@ -65,7 +65,7 @@ public class Plugin_Debug extends Plugin_Base {
                 break;
             
             default:
-                this.logger.debug("Result set or Packet is "+MySQL_Packet.getType(context.get_packet())+" type.");
+                this.logger.debug("Result set or Packet is "+MySQL_Packet.getType(context.buffer.get(context.buffer.size()-1))+" type.");
                 break;
         }
     }
