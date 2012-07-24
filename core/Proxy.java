@@ -92,20 +92,38 @@ public class Proxy extends Thread {
                 switch (this.mode) {
                     case MySQL_Flags.MODE_READ_HANDSHAKE:
                         this.logger.trace("MODE_READ_HANDSHAKE");
-                        this.nextMode = MySQL_Flags.MODE_READ_AUTH;
+                        this.nextMode = MySQL_Flags.MODE_SEND_HANDSHAKE;
                         this.read_handshake();
+                        break;
+                    
+                    case MySQL_Flags.MODE_SEND_HANDSHAKE:
+                        this.logger.trace("MODE_SEND_HANDSHAKE");
+                        this.nextMode = MySQL_Flags.MODE_READ_AUTH;
+                        this.send_handshake();
                         break;
                     
                     case MySQL_Flags.MODE_READ_AUTH:
                         this.logger.trace("MODE_READ_AUTH");
-                        this.nextMode = MySQL_Flags.MODE_READ_AUTH_RESULT;
+                        this.nextMode = MySQL_Flags.MODE_SEND_AUTH;
                         this.read_auth();
+                        break;
+                    
+                    case MySQL_Flags.MODE_SEND_AUTH:
+                        this.logger.trace("MODE_SEND_AUTH");
+                        this.nextMode = MySQL_Flags.MODE_READ_AUTH_RESULT;
+                        this.send_auth();
                         break;
                     
                     case MySQL_Flags.MODE_READ_AUTH_RESULT:
                         this.logger.trace("MODE_READ_AUTH_RESULT");
-                        this.nextMode = MySQL_Flags.MODE_READ_QUERY;
+                        this.nextMode = MySQL_Flags.MODE_SEND_AUTH_RESULT;
                         this.read_auth_result();
+                        break;
+                    
+                    case MySQL_Flags.MODE_SEND_AUTH_RESULT:
+                        this.logger.trace("MODE_SEND_AUTH_RESULT");
+                        this.nextMode = MySQL_Flags.MODE_READ_QUERY;
+                        this.send_auth_result();
                         break;
                     
                     case MySQL_Flags.MODE_READ_QUERY:
@@ -194,12 +212,24 @@ public class Proxy extends Thread {
                     plugin.read_handshake(this);
                     break;
                 
+                case MySQL_Flags.MODE_SEND_HANDSHAKE:
+                    plugin.send_handshake(this);
+                    break;
+                
                 case MySQL_Flags.MODE_READ_AUTH:
                     plugin.read_auth(this);
                     break;
                 
+                case MySQL_Flags.MODE_SEND_AUTH:
+                    plugin.send_auth(this);
+                    break;
+                
                 case MySQL_Flags.MODE_READ_AUTH_RESULT:
                     plugin.read_auth_result(this);
+                    break;
+                
+                case MySQL_Flags.MODE_SEND_AUTH_RESULT:
+                    plugin.send_auth_result(this);
                     break;
                 
                 case MySQL_Flags.MODE_READ_QUERY:
@@ -383,18 +413,10 @@ public class Proxy extends Thread {
         
         // Set Replace the packet in the buffer
         this.buffer.set(this.packet_id, this.authChallenge.toPacket());
-        
-        // Flush the buffer out
-        this.write(this.clientOut);
     }
     
-    public void read_auth_result() {
-        this.logger.trace("read_auth_result");
-        byte[] packet = this.read_packet(this.mysqlIn);
-        if (MySQL_Packet.getType(packet) != MySQL_Flags.OK) {
-            this.logger.fatal("Auth is not okay!");
-            this.halt();
-        }
+    public void send_handshake() {
+        this.logger.trace("send_handshake");
         this.write(this.clientOut);
     }
     
@@ -414,8 +436,25 @@ public class Proxy extends Thread {
         this.authReply.removeCapabilityFlag(MySQL_Flags.CLIENT_SSL);
         
         this.schema = this.authReply.schema;
-        
+    }
+    
+    public void send_auth() {
+        this.logger.trace("send_auth");
         this.write(this.mysqlOut);
+    }
+    
+    public void read_auth_result() {
+        this.logger.trace("read_auth_result");
+        byte[] packet = this.read_packet(this.mysqlIn);
+        if (MySQL_Packet.getType(packet) != MySQL_Flags.OK) {
+            this.logger.fatal("Auth is not okay!");
+            this.halt();
+        }
+    }
+    
+    public void send_auth_result() {
+        this.logger.trace("read_auth_result");
+        this.write(this.clientOut);
     }
     
     public void read_query() {

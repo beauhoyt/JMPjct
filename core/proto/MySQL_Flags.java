@@ -5,15 +5,18 @@
  */
 
 interface MySQL_Flags {
-    public static final int MODE_INIT                           = 0; // Connection opened
-    public static final int MODE_READ_HANDSHAKE                 = 1; // Read the handshake from the server, process it, and forward it
-    public static final int MODE_READ_AUTH                      = 2; // Read the reply from the client, process it, and forward it
-    public static final int MODE_READ_AUTH_RESULT               = 3; // Read the reply from the server, process it and forward it
-    public static final int MODE_READ_QUERY                     = 4; // Read the query from the client, process it
-    public static final int MODE_SEND_QUERY                     = 5; // Send the query to the server
-    public static final int MODE_READ_QUERY_RESULT              = 6; // Read the result set from the server, and process it
-    public static final int MODE_SEND_QUERY_RESULT              = 7; // Send a result set to the client
-    public static final int MODE_CLEANUP                        = 8; // Connection closed
+    public static final int MODE_INIT                           = 0;  // Connection opened
+    public static final int MODE_READ_HANDSHAKE                 = 1;  // Read the handshake from the server and process it
+    public static final int MODE_SEND_HANDSHAKE                 = 2;  // Forward the handshake from the server
+    public static final int MODE_READ_AUTH                      = 3;  // Read the reply from the client and process it
+    public static final int MODE_SEND_AUTH                      = 4;  // Forward the reply from the client
+    public static final int MODE_READ_AUTH_RESULT               = 5;  // Read the reply from the server and process it
+    public static final int MODE_SEND_AUTH_RESULT               = 6;  // Forward the reply from the server
+    public static final int MODE_READ_QUERY                     = 7;  // Read the query from the client and process it
+    public static final int MODE_SEND_QUERY                     = 8;  // Send the query to the server
+    public static final int MODE_READ_QUERY_RESULT              = 9;  // Read the result set from the server and and process it
+    public static final int MODE_SEND_QUERY_RESULT              = 10; // Send a result set to the client
+    public static final int MODE_CLEANUP                        = 11; // Connection closed
     
     // Packet types
     public static final byte COM_SLEEP                          = (byte)0x00; // deprecated
@@ -46,7 +49,7 @@ interface MySQL_Flags {
     public static final byte COM_SET_OPTION                     = (byte)0x1b;
     public static final byte COM_STMT_FETCH                     = (byte)0x1c;
     public static final byte COM_DAEMON                         = (byte)0x1d; // deprecated
-    public static final byte COM_UNKNOWN                        = (byte)0xff;
+    public static final byte COM_UNKNOWN                        = (byte)0xff; // bad!
     
     public static final byte OK                                 = (byte)0x00;
     public static final byte ERR                                = (byte)0xff;
