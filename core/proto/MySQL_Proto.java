@@ -5,11 +5,22 @@
 import org.apache.log4j.Logger;
 
 public class MySQL_Proto {
-    public static Logger logger = Logger.getLogger("MySQL.Proto");
-    public static int offsetOffset = 0;
+    public Logger logger = Logger.getLogger("MySQL.Proto");
+    
+    public byte[] packet = null;
+    public int offset = 0;
+    
+    public MySQL_Proto(byte[] packet) {
+        this.packet = packet;
+    }
+    
+    public MySQL_Proto(byte[] packet, int offset) {
+        this.packet = packet;
+        this.offset = offset;
+    }
     
     public static byte[] build_fixed_int(int size, long value) {
-        MySQL_Proto.logger.trace("build_fixed_int");
+        Logger.getLogger("MySQL.Proto").trace("build_fixed_int");
         byte[] packet = new byte[size];
         
         if (size == 8) {
@@ -41,14 +52,14 @@ public class MySQL_Proto {
             packet[0] = (byte) ((value >>  0) & 0xFF);
         }
         else {
-            MySQL_Proto.logger.fatal("Encoding int["+size+"] "+value+" failed!");
+            Logger.getLogger("MySQL.Proto").fatal("Encoding int["+size+"] "+value+" failed!");
             return null;
         }
         return packet;
     }
     
     public static byte[] build_lenenc_int(long value) {
-        MySQL_Proto.logger.trace("build_lenenc_int");
+        Logger.getLogger("MySQL.Proto").trace("build_lenenc_int");
         byte[] packet = null;
         
         if (value < 251) {
@@ -85,7 +96,7 @@ public class MySQL_Proto {
     }
     
     public static byte[] build_lenenc_str(String str) {
-        MySQL_Proto.logger.trace("build_lenenc_str");
+        Logger.getLogger("MySQL.Proto").trace("build_lenenc_str");
         if (str.equals("")) {
             byte[] packet = new byte[1];
             packet[0] = 0x00;
@@ -101,12 +112,12 @@ public class MySQL_Proto {
     }
     
     public static byte[] build_null_str(String str) {
-        MySQL_Proto.logger.trace("build_null_str");
+        Logger.getLogger("MySQL.Proto").trace("build_null_str");
         return MySQL_Proto.build_fixed_str(str.length() + 1, str);
     }
     
     public static byte[] build_fixed_str(int size, String str) {
-        MySQL_Proto.logger.trace("build_fixed_str");
+        Logger.getLogger("MySQL.Proto").trace("build_fixed_str");
         byte[] packet = new byte[size];
         byte[] strByte = str.getBytes();
         if (strByte.length < packet.length)
@@ -116,7 +127,7 @@ public class MySQL_Proto {
     }
     
     public static byte[] build_filler(int len) {
-        MySQL_Proto.logger.trace("build_filler");
+        Logger.getLogger("MySQL.Proto").trace("build_filler");
         byte[] filler = new byte[len];
         for (int i = 0; i < len; i++)
             filler[i] = 0x00;
@@ -124,44 +135,37 @@ public class MySQL_Proto {
     }
     
     public static byte[] build_byte(byte value) {
-        MySQL_Proto.logger.trace("build_byte");
+        Logger.getLogger("MySQL.Proto").trace("build_byte");
         byte[] field = new byte[1];
         field[0] = value;
         return field;
     }
     
     public static char int2char(byte i) {
-        MySQL_Proto.logger.trace("int2char");
+        Logger.getLogger("MySQL.Proto").trace("int2char");
         return (char)i;
     }
     
     public static byte char2int(char i) {
-        MySQL_Proto.logger.trace("char2int");
+        Logger.getLogger("MySQL.Proto").trace("char2int");
         return (byte)i;
     }
     
-    public static int get_offset_offset() {
-        MySQL_Proto.logger.trace("get_offset_offset");
-        int offsetOffset = MySQL_Proto.offsetOffset;
-        MySQL_Proto.offsetOffset = 0;
-        return offsetOffset;
-    }
-    
-    public static long get_fixed_int(byte[] packet, int offset, int size) {
-        MySQL_Proto.logger.trace("get_fixed_int");
+    public long get_fixed_int(int size) {
+        this.logger.trace("get_fixed_int");
         byte[] bytes = null;
         
-        if ( packet.length < (size + offset))
+        if ( this.packet.length < (size + this.offset))
             return -1;
         
         bytes = new byte[size];
         System.arraycopy(packet, offset, bytes, 0, size);
-        MySQL_Proto.offsetOffset = size;
-        return MySQL_Proto.get_fixed_int(bytes);
+        this.offset += size;
+        return this.get_fixed_int(bytes);
     }
     
     public static long get_fixed_int(byte[] bytes) {
-        MySQL_Proto.logger.trace("get_fixed_int");
+        Logger.getLogger("MySQL.Proto").trace("get_fixed_int");
         long value = 0;
         
         for (int i = bytes.length-1; i > 0; i--) {
@@ -173,97 +177,99 @@ public class MySQL_Proto {
         return value;
     }
     
-    public static long get_lenenc_int(byte[] packet, int offset) {
-        MySQL_Proto.logger.trace("get_lenenc_int");
+    public long get_lenenc_int() {
+        this.logger.trace("get_lenenc_int");
         int size = 0;
         
         // 1 byte int
-        if (packet[offset] < 251) {
+        if (this.packet[offset] < 251) {
             size = 1;
         }
         // 2 byte int
-        else if (packet[offset] == 252) {
-            MySQL_Proto.offsetOffset += 1;
+        else if (this.packet[offset] == 252) {
+            this.offset += 1;
             size = 2;
         }
         // 3 byte int
-        else if (packet[offset] == 253) {
-            MySQL_Proto.offsetOffset += 1;
+        else if (this.packet[offset] == 253) {
+            this.offset += 1;
             size = 3;
         }
         // 8 byte int
-        else if (packet[offset] == 254) {
-            MySQL_Proto.offsetOffset += 1;
+        else if (this.packet[offset] == 254) {
+            this.offset += 1;
             size = 8;
         }
         
         if (size == 0) {
-            MySQL_Proto.logger.fatal("Decoding int at offset "+offset+" failed!");
+            this.logger.fatal("Decoding int at offset "+offset+" failed!");
             return -1;
         }
         
-        return MySQL_Proto.get_fixed_int(packet, offset, size);
+        return this.get_fixed_int(size);
     }
     
-    public static String get_fixed_str(byte[] packet, int offset, int len) {
-        MySQL_Proto.logger.trace("get_fixed_str");
+    public String get_fixed_str(int len) {
+        this.logger.trace("get_fixed_str");
         String str = "";
+        int start = this.offset;
+        int end = this.offset+len;
         
-        for (int i = offset; i < (offset+len); i++) {
+        for (int i = start; i < end; i++) {
             str += MySQL_Proto.int2char(packet[i]);
-            MySQL_Proto.offsetOffset += 1;
+            this.offset += 1;
         }
         
         return str;
     }
     
-    public static String get_null_str(byte[] packet, int offset) {
-        MySQL_Proto.logger.trace("get_null_str");
+    public String get_null_str() {
+        this.logger.trace("get_null_str");
         String str = "";
+        int start = this.offset;
+        int end = this.packet.length;
         
-        for (int i = offset; i < packet.length; i++) {
+        for (int i = start; i < end; i++) {
             if (packet[i] == 0x00) {
-                MySQL_Proto.offsetOffset += 1;
+                this.offset += 1;
                 break;
             }
             str += MySQL_Proto.int2char(packet[i]);
-            MySQL_Proto.offsetOffset += 1;
+            this.offset += 1;
         }
         
         return str;
     }
     
-    public static String get_eop_str(byte[] packet, int offset) {
-        MySQL_Proto.logger.trace("get_eop_str");
+    public String get_eop_str() {
+        this.logger.trace("get_eop_str");
         String str = "";
+        int start = this.offset;
+        int end = this.packet.length;
         
-        for (int i = offset; i < packet.length; i++) {
+        for (int i = start; i < end; i++) {
             if (packet[i] == 0x00 && i == packet.length-1) {
-                MySQL_Proto.offsetOffset += 1;
+                this.offset += 1;
                 break;
             }
             str += MySQL_Proto.int2char(packet[i]);
-            MySQL_Proto.offsetOffset += 1;
+            this.offset += 1;
         }
         
         return str;
     }
     
-    public static String get_lenenc_str(byte[] packet, int offset) {
-        MySQL_Proto.logger.trace("get_lenenc_str");
+    public String get_lenenc_str() {
+        this.logger.trace("get_lenenc_str");
         String str = "";
-        int i = 0;
-        int offsetOffset = 0;
-        int size = (int)MySQL_Proto.get_lenenc_int(packet, offset);
+        int size = (int)this.get_lenenc_int();
+        int start = this.offset;
+        int end = this.offset + size;
         
-        offsetOffset = MySQL_Proto.get_offset_offset();
-        offset += offsetOffset;
-        
-        for (i = offset; i < (offset + size); i++) {
+        for (int i = start; i < end; i++) {
             str += MySQL_Proto.int2char(packet[i]);
-            MySQL_Proto.offsetOffset += 1;
+            this.offset += 1;
         }
-        MySQL_Proto.offsetOffset += offsetOffset;
         
         return str;
     }

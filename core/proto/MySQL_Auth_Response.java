@@ -60,51 +60,31 @@ public class MySQL_Auth_Response extends MySQL_Packet {
     public static MySQL_Auth_Response loadFromPacket(byte[] packet) {
         Logger.getLogger("MySQL.Auth.Response").trace("loadFromPacket");
         MySQL_Auth_Response obj = new MySQL_Auth_Response();
-        int offset = 3;
+        MySQL_Proto proto = new MySQL_Proto(packet, 3);
         
-        obj.sequenceId = MySQL_Proto.get_fixed_int(packet, offset, 1);
-        offset += MySQL_Proto.get_offset_offset();
-        
-        obj.capabilityFlags = MySQL_Proto.get_fixed_int(packet, offset, 2);
-        MySQL_Proto.get_offset_offset();
+        obj.sequenceId = proto.get_fixed_int(1);
+        obj.capabilityFlags = proto.get_fixed_int(2);
+        proto.offset -= 2;
         
         if (obj.hasCapabilityFlag(MySQL_Flags.CLIENT_PROTOCOL_41)) {
-            obj.capabilityFlags = MySQL_Proto.get_fixed_int(packet, offset, 4);
-            offset += MySQL_Proto.get_offset_offset();
-            
-            obj.maxPacketSize = MySQL_Proto.get_fixed_int(packet, offset, 4);
-            offset += MySQL_Proto.get_offset_offset();
-            
-            obj.characterSet = MySQL_Proto.get_fixed_int(packet, offset, 1);
-            offset += MySQL_Proto.get_offset_offset();
-            
-            MySQL_Proto.get_fixed_str(packet, offset, 23);
-            offset += MySQL_Proto.get_offset_offset();
-            
-            obj.username = MySQL_Proto.get_null_str(packet, offset);
-            offset += MySQL_Proto.get_offset_offset();
+            obj.capabilityFlags = proto.get_fixed_int(4);
+            obj.maxPacketSize = proto.get_fixed_int(4);
+            obj.characterSet = proto.get_fixed_int(1);
+            proto.get_fixed_str(23);
+            obj.username = proto.get_null_str();
             
             if (obj.hasCapabilityFlag(MySQL_Flags.CLIENT_SECURE_CONNECTION))
-                obj.authResponse = MySQL_Proto.get_null_str(packet, offset);
+                obj.authResponse = proto.get_null_str();
             else
-                obj.authResponse = MySQL_Proto.get_lenenc_str(packet, offset);
-            offset += MySQL_Proto.get_offset_offset();
+                obj.authResponse = proto.get_lenenc_str();
             
-            obj.schema = MySQL_Proto.get_eop_str(packet, offset);
-            offset += MySQL_Proto.get_offset_offset();
+            obj.schema = proto.get_eop_str();
         }
         else {
-            obj.capabilityFlags = MySQL_Proto.get_fixed_int(packet, offset, 2);
-            offset += MySQL_Proto.get_offset_offset();
-            
-            obj.maxPacketSize = MySQL_Proto.get_fixed_int(packet, offset, 3);
-            offset += MySQL_Proto.get_offset_offset();
-            
-            obj.username = MySQL_Proto.get_null_str(packet, offset);
-            offset += MySQL_Proto.get_offset_offset();
-            
-            obj.schema = MySQL_Proto.get_null_str(packet, offset);
-            offset += MySQL_Proto.get_offset_offset();
+            obj.capabilityFlags = proto.get_fixed_int(2);
+            obj.maxPacketSize = proto.get_fixed_int(3);
+            obj.username = proto.get_null_str();
+            obj.schema = proto.get_null_str();
         }
         
         return obj;

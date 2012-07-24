@@ -38,8 +38,7 @@ public abstract class MySQL_Packet {
     
     public static int getSize(byte[] packet) {
         Logger.getLogger("MySQL.Packet").trace("getSize");
-        int size = (int)MySQL_Proto.get_fixed_int(packet, 0, 3);
-        MySQL_Proto.get_offset_offset();
+        int size = (int) new MySQL_Proto(packet).get_fixed_int(3);
         Logger.getLogger("MySQL.Packet").trace("Packet size is "+size);
         return size;
     }
@@ -51,7 +50,7 @@ public abstract class MySQL_Packet {
     
     public static long getSequenceId(byte[] packet) {
         Logger.getLogger("MySQL.Packet").trace("getSequenceId");
-        return MySQL_Proto.get_fixed_int(packet, 3, 1);
+        return new MySQL_Proto(packet, 3).get_fixed_int(1);
     }
     
     public static final void dump(byte[] packet) {

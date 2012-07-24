@@ -74,44 +74,22 @@ public class MySQL_Auth_Challenge extends MySQL_Packet {
     public static MySQL_Auth_Challenge loadFromPacket(byte[] packet) {
         Logger.getLogger("MySQL.Auth.Challenge").trace("loadFromPacket");
         MySQL_Auth_Challenge obj = new MySQL_Auth_Challenge();
-        int offset = 3;
+        MySQL_Proto proto = new MySQL_Proto(packet, 3);
         
-        obj.sequenceId = MySQL_Proto.get_fixed_int(packet, offset, 1);
-        offset += MySQL_Proto.get_offset_offset();
-        
-        obj.protocolVersion = MySQL_Proto.get_fixed_int(packet, offset, 1);
-        offset += MySQL_Proto.get_offset_offset();
-        
-        obj.serverVersion = MySQL_Proto.get_null_str(packet, offset);
-        offset += MySQL_Proto.get_offset_offset();
-        
-        obj.connectionId = MySQL_Proto.get_fixed_int(packet, offset, 4);
-        offset += MySQL_Proto.get_offset_offset();
-        
-        obj.challenge1 = MySQL_Proto.get_fixed_str(packet, offset, 8);
-        offset += MySQL_Proto.get_offset_offset();
-        
-        MySQL_Proto.get_fixed_str(packet, offset, 1);
-        offset += MySQL_Proto.get_offset_offset();
-        
-        obj.capabilityFlags = MySQL_Proto.get_fixed_int(packet, offset, 2);
-        offset += MySQL_Proto.get_offset_offset();
-        
-        obj.characterSet = MySQL_Proto.get_fixed_int(packet, offset, 1);
-        offset += MySQL_Proto.get_offset_offset();
-        
-        obj.statusFlags = MySQL_Proto.get_fixed_int(packet, offset, 2);
-        offset += MySQL_Proto.get_offset_offset();
-        
-        MySQL_Proto.get_fixed_str(packet, offset, 13);
-        offset += MySQL_Proto.get_offset_offset();
+        obj.sequenceId = proto.get_fixed_int(1);
+        obj.protocolVersion = proto.get_fixed_int(1);
+        obj.serverVersion = proto.get_null_str();
+        obj.connectionId = proto.get_fixed_int(4);
+        obj.challenge1 = proto.get_fixed_str(8);
+        proto.get_fixed_str(1);
+        obj.capabilityFlags = proto.get_fixed_int(2);
+        obj.characterSet = proto.get_fixed_int(1);
+        obj.statusFlags = proto.get_fixed_int(2);
+        proto.get_fixed_str(13);
         
         if (obj.hasCapabilityFlag(MySQL_Flags.CLIENT_SECURE_CONNECTION)) {
-            obj.challenge2 = MySQL_Proto.get_fixed_str(packet, offset, 12);
-            offset += MySQL_Proto.get_offset_offset();
-            
-            MySQL_Proto.get_fixed_str(packet, offset, 1);
-            offset += MySQL_Proto.get_offset_offset();
+            obj.challenge2 = proto.get_fixed_str(12);
+            proto.get_fixed_str(1);
         }
         
         return obj;

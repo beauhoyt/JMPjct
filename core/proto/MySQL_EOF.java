@@ -41,20 +41,16 @@ public class MySQL_EOF extends MySQL_Packet {
     public static MySQL_EOF loadFromPacket(byte[] packet) {
         Logger.getLogger("MySQL.EOF").trace("loadFromPacket");
         MySQL_EOF obj = new MySQL_EOF();
-        int offset = 3;
+        MySQL_Proto proto = new MySQL_Proto(packet, 3);
         
-        obj.sequenceId = MySQL_Proto.get_fixed_int(packet, offset, 1);
-        offset += MySQL_Proto.get_offset_offset();
+        obj.sequenceId = proto.get_fixed_int(1);
         
         // Header
-        MySQL_Proto.get_fixed_int(packet, offset, 1);
-        offset += MySQL_Proto.get_offset_offset();
+        proto.get_fixed_int(1);
         
-        obj.statusFlags = MySQL_Proto.get_fixed_int(packet, offset, 2);
-        offset += MySQL_Proto.get_offset_offset();
+        obj.statusFlags = proto.get_fixed_int(2);
         
-        obj.warnings = MySQL_Proto.get_fixed_int(packet, offset, 2);
-        offset += MySQL_Proto.get_offset_offset();
+        obj.warnings = proto.get_fixed_int(2);
         
         return obj;
     }

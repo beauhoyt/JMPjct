@@ -23,17 +23,14 @@ public class MySQL_Com_Query extends MySQL_Packet {
     public static MySQL_Com_Query loadFromPacket(byte[] packet) {
         Logger.getLogger("MySQL.Com.Query").trace("loadFromPacket");
         MySQL_Com_Query obj = new MySQL_Com_Query();
-        int offset = 3;
+        MySQL_Proto proto = new MySQL_Proto(packet, 3);
         
-        obj.sequenceId = MySQL_Proto.get_fixed_int(packet, offset, 1);
-        offset += MySQL_Proto.get_offset_offset();
+        obj.sequenceId = proto.get_fixed_int(1);
         
         // Header
-        MySQL_Proto.get_fixed_int(packet, offset, 1);
-        offset += MySQL_Proto.get_offset_offset();
+        proto.get_fixed_int(1);
         
-        obj.query = MySQL_Proto.get_eop_str(packet, offset);
-        offset += MySQL_Proto.get_offset_offset();
+        obj.query = proto.get_eop_str();
         
         return obj;
     }

@@ -22,14 +22,10 @@ public class MySQL_ColCount extends MySQL_Packet {
     public static MySQL_ColCount loadFromPacket(byte[] packet) {
         Logger.getLogger("MySQL.ColCount").trace("loadFromPacket");
         MySQL_ColCount obj = new MySQL_ColCount();
-        int offset = 3;
+        MySQL_Proto proto = new MySQL_Proto(packet, 3);
         
-        obj.sequenceId = MySQL_Proto.get_fixed_int(packet, offset, 1);
-        offset += MySQL_Proto.get_offset_offset();
-        
-        // Header
-        obj.colCount = MySQL_Proto.get_lenenc_int(packet, offset);
-        offset += MySQL_Proto.get_offset_offset();
+        obj.sequenceId = proto.get_fixed_int(1);
+        obj.colCount = proto.get_lenenc_int();
         
         return obj;
     }
