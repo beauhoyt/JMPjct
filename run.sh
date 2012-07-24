@@ -5,6 +5,8 @@ set -o nounset
 set -o pipefail
 
 JAVAOPT="-Xmx4096m"
+JAVAOPT="${JAVAOPT} -Xshare:off"
+
 JAVACOPT="-Xlint:unchecked"
 
 PROXYOPT=""
@@ -22,7 +24,7 @@ PROXYOPT="${PROXYOPT} -DlogConf=conf/log.conf"
 PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Proxy,Plugin_Ehcache"
 
 # Proxy
-PROXYOPT="${PROXYOPT} -DproxyHosts=5050:127.0.0.1:3306,5051:127.0.0.1:3307"
+PROXYOPT="${PROXYOPT} -DproxyHosts=5050:127.0.0.1:3306,5051:127.0.0.1:2000"
 
 # Ehcache
 PROXYOPT="${PROXYOPT} -DehcacheConf=conf/ehcache.xml"

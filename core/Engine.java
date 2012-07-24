@@ -50,8 +50,11 @@ public class Engine extends Thread {
     
     public Engine(int port, Socket clientSocket, ArrayList<Plugin_Base> plugins) throws IOException {
         this.port = port;
-        this.clientSocket = clientSocket;
         this.plugins = plugins;
+        
+        this.clientSocket = clientSocket;
+        this.clientSocket.setPerformancePreferences(0, 2, 1);
+        this.clientSocket.setTcpNoDelay(true);
         
         this.clientIn = this.clientSocket.getInputStream();
         this.clientOut = this.clientSocket.getOutputStream();

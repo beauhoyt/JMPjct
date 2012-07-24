@@ -27,6 +27,9 @@ public class Plugin_Proxy extends Plugin_Base {
         
         // Connect to the mysql server on the other side
         this.mysqlSocket = new Socket(this.mysqlHost, this.mysqlPort);
+        this.mysqlSocket.setPerformancePreferences(0, 2, 1);
+        this.mysqlSocket.setTcpNoDelay(true);
+        
         this.logger.info("Connected to mysql server at "+this.mysqlHost+":"+this.mysqlPort);
         this.mysqlIn = this.mysqlSocket.getInputStream();
         this.mysqlOut = this.mysqlSocket.getOutputStream();
