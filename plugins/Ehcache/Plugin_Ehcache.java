@@ -14,11 +14,7 @@ public class Plugin_Ehcache extends Plugin_Base {
     private int TTL = 0;
     private String key = "";
     
-    public void init(Proxy context) {
-        // Bail out early if we have a cache
-        if (Plugin_Ehcache.cache != null)
-            return;
-            
+    public Plugin_Ehcache() {
         if (Plugin_Ehcache.cachemanager == null) {
             this.logger.trace("Ehcache - CacheManager: Loading "+System.getProperty("ehcacheConf"));
             Plugin_Ehcache.cachemanager = CacheManager.create(System.getProperty("ehcacheConf"));
@@ -32,12 +28,14 @@ public class Plugin_Ehcache extends Plugin_Base {
         
         if (Plugin_Ehcache.cache == null) {
             this.logger.fatal("Ehcache is null! Does instance '"+System.getProperty("ehcacheCacheName")+"' exist?");
-            context.halt();
         }
     }
     
     @SuppressWarnings("unchecked")
     public void read_query(Proxy context) {
+        if (Plugin_Ehcache.cache == null)
+            return;
+        
         String query = context.query;
         String command = "";
         String value = "";
@@ -400,6 +398,9 @@ public class Plugin_Ehcache extends Plugin_Base {
     }
     
     public void read_query_result(Proxy context) {
+        if (Plugin_Ehcache.cache == null)
+            return;
+        
         // Cache this key?
         if (this.TTL == 0 || context.buffer.size() == 0)
             return;
