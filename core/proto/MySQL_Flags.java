@@ -144,6 +144,9 @@ interface MySQL_Flags {
     public static final int MYSQL_OPTION_MULTI_STATEMENTS_ON    = 0;
     public static final int MYSQL_OPTION_MULTI_STATEMENTS_OFF   = 1;
     
+    public static final int ROW_TYPE_TEXT                       = 0;
+    public static final int ROW_TYPE_BINARY                     = 1;
+    
     public static final int RS_OK                               = 0;
     public static final int RS_FULL                             = 1;
     public static final int RS_COL_DEF                          = 2;

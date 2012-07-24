@@ -8,6 +8,8 @@ import org.apache.log4j.Logger;
 public class MySQL_Row extends MySQL_Packet {
     public Logger logger = Logger.getLogger("MySQL.Row");
     
+    public int type = MySQL_Flags.ROW_TYPE_TEXT;
+    public int colType = MySQL_Flags.MYSQL_TYPE_VAR_STRING;
     public ArrayList<Object> data = new ArrayList<Object>();
     
     public MySQL_Row () {}
@@ -67,12 +69,20 @@ public class MySQL_Row extends MySQL_Packet {
         ArrayList<byte[]> payload = new ArrayList<byte[]>();
         
         for (Object obj: this.data) {
-            if (obj instanceof String)
-                payload.add(MySQL_Proto.build_lenenc_str((String)obj));
-            else if (obj instanceof Integer || obj == null)
-                payload.add(MySQL_Proto.build_lenenc_int((Integer)obj));
-            else {
-                // trigger error
+            switch (this.type) {
+                case MySQL_Flags.ROW_TYPE_TEXT: 
+                    if (obj instanceof String)
+                        payload.add(MySQL_Proto.build_lenenc_str((String)obj));
+                    else if (obj instanceof Integer || obj == null)
+                        payload.add(MySQL_Proto.build_lenenc_int((Integer)obj));
+                    else {
+                        // trigger error
+                    }
+                    break;
+                case MySQL_Flags.ROW_TYPE_BINARY:
+                    break;
+                default:
+                    break;
             }
         }
         
