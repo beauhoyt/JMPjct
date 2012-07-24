@@ -39,7 +39,7 @@ public class Proxy extends Thread {
     public long sequenceId = 0;
     
     // Buffer or directly pass though the data
-    public boolean bufferResultSet = false;
+    public boolean bufferResultSet = true;
     
     // Modes
     public int mode = MySQL_Flags.MODE_INIT;
@@ -47,19 +47,12 @@ public class Proxy extends Thread {
     // Allow plugins to muck with the modes
     public int nextMode = MySQL_Flags.MODE_INIT;
     
-    public Proxy(Socket clientSocket, String mysqlHost, int mysqlPort, ArrayList<Proxy_Plugin> plugins) {
+    public Proxy(Socket clientSocket, String mysqlHost, int mysqlPort, ArrayList<Proxy_Plugin> plugins) throws IOException {
         this.clientSocket = clientSocket;
         this.plugins = plugins;
         
-        try {
-            this.clientIn = this.clientSocket.getInputStream();
-            this.clientOut = this.clientSocket.getOutputStream();
-        }
-        catch (IOException e) {
-            this.logger.fatal("IOException: "+e);
-            this.running = false;
-            return;
-        }
+        this.clientIn = this.clientSocket.getInputStream();
+        this.clientOut = this.clientSocket.getOutputStream();
     }
 
     public void run() {
@@ -158,16 +151,19 @@ public class Proxy extends Thread {
                 this.mode = this.nextMode;
             }
             
+            this.logger.info("Exiting thread.");            
+            this.clientSocket.close();
+        }
+        catch (IOException e) {}
+        finally {
             try {
                 this.clientSocket.close();
             }
             catch (IOException e) {}
             
-            this.logger.info("Exiting thread.");
-        }
-        finally {
             try {
-                this.clientSocket.close();
+                for (Proxy_Plugin plugin : this.plugins)
+                            plugin.cleanup(this);
             }
             catch (IOException e) {}
         }
@@ -180,8 +176,6 @@ public class Proxy extends Thread {
     
     public void halt() {
         this.logger.info("Halting!");
-        this.mode = MySQL_Flags.MODE_CLEANUP;
-        this.nextMode = MySQL_Flags.MODE_CLEANUP;
         this.running = false;
     }
     
@@ -210,127 +204,19 @@ public class Proxy extends Thread {
         return this.get_packet(this.packet_id);
     }
     
-    public void read_full_result_set(InputStream in) {
-        this.logger.trace("read_full_result_set");
-        // Assume we have the start of a result set already
-        
-        byte[] packet = this.buffer.get(this.packet_id);
-        long colCount = MySQL_ColCount.loadFromPacket(packet).colCount;
-        this.logger.trace("colCount "+colCount);
-        
-        // Read the columns and the EOF field
-        for (int i = 0; i < (colCount+1); i++) {
-            
-            // Evil optimization
-            if (!this.bufferResultSet)
-                this.write(this.clientOut);
-                
-            packet = this.read_packet(in);
-            if (packet == null) {
-                this.halt();
-                return;
-            }
-        }
-        
-        do {
-            // Evil optimization
-            if (!this.bufferResultSet)
-                this.write(this.clientOut);
-            
-            packet = this.read_packet(in);
-            if (packet == null) {
-                this.halt();
-                return;
-            }
-        } while (MySQL_Packet.getType(packet) != MySQL_Flags.EOF && MySQL_Packet.getType(packet) != MySQL_Flags.ERR);
-        
-        // Evil optimization
-            if (!this.bufferResultSet)
-                this.write(this.clientOut);
-        
-        if (MySQL_Packet.getType(packet) == MySQL_Flags.ERR)
-            return;
-        
-        if (MySQL_EOF.loadFromPacket(packet).hasStatusFlag(MySQL_Flags.SERVER_MORE_RESULTS_EXISTS)) {
-            this.logger.trace("More Result Sets.");
-            this.read_packet(in);
-            this.read_full_result_set(in);
-        }
+    public void read_full_result_set(InputStream in, OutputStream out) throws IOException {
+        this.buffer = MySQL_Packet.read_full_result_set(in, out, this.buffer, true);
     }
     
-    public byte[] read_packet(InputStream in) {
-        this.logger.trace("read_packet");
-        this.logger.trace(in);
-        int b = 0;
-        int size = 0;
-        byte[] packet = new byte[3];
-        
-        try {
-            // Read size (3)
-            int offset = 0;
-            int target = 3;
-            do {
-                b = in.read(packet, offset, (target - offset));
-                if (b == -1) {
-                    this.halt();
-                    return null;
-                }
-                offset += b;
-            } while (offset != target);
-        }
-        catch (IOException e) {
-            this.logger.fatal("IOException: "+e);
-            this.halt();
-            return null;
-        }
-        
-        size = MySQL_Packet.getSize(packet);
-        
-        byte[] packet_tmp = new byte[size+4];
-        System.arraycopy(packet, 0, packet_tmp, 0, 3);
-        packet = packet_tmp;
-        packet_tmp = null;
-        
-        try {
-            int offset = 3;
-            int target = packet.length;
-            do {
-                b = in.read(packet, offset, (target - offset));
-                if (b == -1) {
-                    this.halt();
-                    return null;
-                }
-                offset += b;
-            } while (offset != target);
-        }
-        catch (IOException e) {
-            this.logger.fatal("IOException: "+e);
-            this.halt();
-            return null;
-        }
-        
+    public byte[] read_packet(InputStream in) throws IOException {
+        byte[] packet = MySQL_Packet.read_packet(in);
         this.packet_id = this.buffer.size();
-        MySQL_Packet.dump(packet);
         this.buffer.add(packet);
         return packet;
     }
     
-    public void write(OutputStream out) {
+    public void write(OutputStream out) throws IOException {
         this.logger.trace("write");
-        this.logger.trace(out);
-        
-        for (byte[] packet: this.buffer) {
-            this.logger.trace("Writing packet size "+packet.length);
-            try {
-                MySQL_Packet.dump(packet);
-                out.write(packet);
-            }
-            catch (IOException e) {
-                this.halt();
-                this.logger.fatal("IOException: "+e);
-                return;
-            }
-        }
-        this.clear_buffer();
+        MySQL_Packet.write(out, this.buffer);
     }
 }

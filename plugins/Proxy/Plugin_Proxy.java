@@ -19,26 +19,17 @@ public class Plugin_Proxy extends Plugin_Base {
         this.mysqlPort = 3306;
     }
     
-    public void init(Proxy context) {
+    public void init(Proxy context) throws IOException, UnknownHostException {
         this.logger.trace("init");
-        try {
-            // Connect to the mysql server on the other side
-            this.mysqlSocket = new Socket(this.mysqlHost, this.mysqlPort);
-            this.logger.info("Connected to mysql server at "+this.mysqlHost+":"+this.mysqlPort);
-            this.mysqlIn = this.mysqlSocket.getInputStream();
-            this.mysqlOut = this.mysqlSocket.getOutputStream();
-        }
-        catch (java.net.UnknownHostException e){
-            this.logger.fatal(e);
-            context.halt();
-        }
-        catch (java.io.IOException e){
-            this.logger.fatal(e);
-            context.halt();
-        }
+        
+        // Connect to the mysql server on the other side
+        this.mysqlSocket = new Socket(this.mysqlHost, this.mysqlPort);
+        this.logger.info("Connected to mysql server at "+this.mysqlHost+":"+this.mysqlPort);
+        this.mysqlIn = this.mysqlSocket.getInputStream();
+        this.mysqlOut = this.mysqlSocket.getOutputStream();
     }
     
-    public void read_handshake(Proxy context) {
+    public void read_handshake(Proxy context) throws IOException {
         this.logger.trace("read_handshake");
         byte[] packet = context.read_packet(this.mysqlIn);
         
@@ -55,12 +46,13 @@ public class Plugin_Proxy extends Plugin_Base {
         context.buffer.set(context.packet_id, context.authChallenge.toPacket());
     }
     
-    public void send_handshake(Proxy context) {
+    public void send_handshake(Proxy context) throws IOException {
         this.logger.trace("send_handshake");
         context.write(context.clientOut);
+        context.clear_buffer();
     }
     
-    public void read_auth(Proxy context) {
+    public void read_auth(Proxy context) throws IOException {
         this.logger.trace("read_auth");
         byte[] packet = context.read_packet(context.clientIn);
         
@@ -78,12 +70,13 @@ public class Plugin_Proxy extends Plugin_Base {
         context.schema = context.authReply.schema;
     }
     
-    public void send_auth(Proxy Proxy) {
+    public void send_auth(Proxy context) throws IOException {
         this.logger.trace("send_auth");
-        Proxy.write(this.mysqlOut);
+        context.write(this.mysqlOut);
+        context.clear_buffer();
     }
     
-    public void read_auth_result(Proxy context) {
+    public void read_auth_result(Proxy context) throws IOException {
         this.logger.trace("read_auth_result");
         byte[] packet = context.read_packet(this.mysqlIn);
         if (MySQL_Packet.getType(packet) != MySQL_Flags.OK) {
@@ -92,12 +85,13 @@ public class Plugin_Proxy extends Plugin_Base {
         }
     }
     
-    public void send_auth_result(Proxy context) {
+    public void send_auth_result(Proxy context) throws IOException {
         this.logger.trace("read_auth_result");
         context.write(context.clientOut);
+        context.clear_buffer();
     }
     
-    public void read_query(Proxy context) {
+    public void read_query(Proxy context) throws IOException {
         this.logger.trace("read_query");
         context.bufferResultSet = false;
         
@@ -129,12 +123,13 @@ public class Plugin_Proxy extends Plugin_Base {
         }
     }
     
-    public void send_query(Proxy context) {
+    public void send_query(Proxy context) throws IOException {
         this.logger.trace("send_query");
         context.write(this.mysqlOut);
+        context.clear_buffer();
     }
     
-    public void read_query_result(Proxy context) {
+    public void read_query_result(Proxy context) throws IOException {
         this.logger.trace("read_query_result");
         
         byte[] packet = context.read_packet(this.mysqlIn);
@@ -147,24 +142,19 @@ public class Plugin_Proxy extends Plugin_Base {
                 break;
             
             default:
-                context.read_full_result_set(this.mysqlIn);
+                context.read_full_result_set(this.mysqlIn, context.clientOut);
                 break;
         }
     }
     
-    public void send_query_result(Proxy context) {
+    public void send_query_result(Proxy context) throws IOException {
         this.logger.trace("send_query_result");
         context.write(context.clientOut);
+        context.clear_buffer();
     }
     
-    public void cleanup(Proxy context) {
+    public void cleanup(Proxy context) throws IOException {
         this.logger.trace("cleanup");
-        try {
-            this.mysqlSocket.close();
-        }
-        catch (java.io.IOException e){
-            this.logger.fatal(e);
-            context.halt();
-        }
+        this.mysqlSocket.close();
     }
 }

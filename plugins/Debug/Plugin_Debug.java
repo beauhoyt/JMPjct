@@ -3,6 +3,7 @@
  * Output packet debugging information
  */
 
+import java.util.*;
 import org.apache.log4j.Logger;
 
 public class Plugin_Debug extends Plugin_Base {
@@ -66,6 +67,17 @@ public class Plugin_Debug extends Plugin_Base {
             default:
                 this.logger.debug("Result set or Packet is "+MySQL_Packet.getType(context.get_packet())+" type.");
                 break;
+        }
+    }
+    
+    public static final void dump_buffer(ArrayList<byte[]> buffer) {
+        Logger logger = Logger.getLogger("Plugin.Debug");
+        
+        if (!logger.isTraceEnabled())
+            return;
+        
+        for (byte[] packet: buffer) {
+            MySQL_Packet.dump(packet);
         }
     }
     
