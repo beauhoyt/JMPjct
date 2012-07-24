@@ -127,97 +127,36 @@ public class Plugin_Ehcache extends Plugin_Base {
             this.logger.trace("STATS");
             MySQL_ResultSet_Text rs = new MySQL_ResultSet_Text();
             MySQL_Row row = null;
-            MySQL_Column key = new MySQL_Column("Key");
-            rs.addColumn(key);
-            MySQL_Column val = new MySQL_Column("Value");
-            rs.addColumn(val);
+            
+            rs.addColumn(new MySQL_Column("Key"));
+            rs.addColumn(new MySQL_Column("Value"));
             
             Statistics stats = Plugin_Ehcache.cache.getStatistics();
             
-            row = new MySQL_Row();
-            row.addData("AverageGetTime");
-            row.addData(stats.getAverageGetTime());
-            rs.addRow(row);
+            rs.addRow(new MySQL_Row("AverageGetTime", stats.getAverageGetTime()));
+            rs.addRow(new MySQL_Row("AverageSearchTime", stats.getAverageSearchTime()));
             
-            row = new MySQL_Row();
-            row.addData("AverageSearchTime");
-            row.addData(stats.getAverageSearchTime() );
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("CacheHits");
-            row.addData(stats.getCacheHits());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("CacheMisses");
-            row.addData(stats.getCacheMisses());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("DiskStoreObjectCount");
-            row.addData(stats.getDiskStoreObjectCount());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("EvictionCount");
-            row.addData(stats.getEvictionCount());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("InMemoryHits");
-            row.addData(stats.getInMemoryHits());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("InMemoryMisses");
-            row.addData(stats.getInMemoryMisses());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("MemoryStoreObjectCount");
-            row.addData(stats.getMemoryStoreObjectCount());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("ObjectCount");
-            row.addData(stats.getObjectCount());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("OffHeapHits");
-            row.addData(stats.getOffHeapHits());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("OffHeapMisses");
-            row.addData(stats.getOffHeapMisses());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("OffHeapStoreObjectCount");
-            row.addData(stats.getOffHeapStoreObjectCount());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("OnDiskHits");
-            row.addData(stats.getOnDiskHits());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("OnDiskMisses");
-            row.addData(stats.getOnDiskMisses());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("SearchesPerSecond");
-            row.addData(stats.getSearchesPerSecond());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("WriterQueueSize");
-            row.addData(stats.getWriterQueueSize());
-            rs.addRow(row);
+            rs.addRow(new MySQL_Row("ObjectCount", stats.getObjectCount()));
+            rs.addRow(new MySQL_Row("MemoryStoreObjectCount", stats.getMemoryStoreObjectCount()));
+            rs.addRow(new MySQL_Row("OffHeapStoreObjectCount", stats.getOffHeapStoreObjectCount()));
+            rs.addRow(new MySQL_Row("DiskStoreObjectCount", stats.getDiskStoreObjectCount()));
+
+            rs.addRow(new MySQL_Row("CacheHits", stats.getCacheHits()));
+            rs.addRow(new MySQL_Row("CacheMisses", stats.getCacheMisses()));
+
+            rs.addRow(new MySQL_Row("InMemoryHits", stats.getInMemoryHits()));
+            rs.addRow(new MySQL_Row("InMemoryMisses", stats.getInMemoryMisses()));
+
+            rs.addRow(new MySQL_Row("OffHeapHits", stats.getOffHeapHits()));
+            rs.addRow(new MySQL_Row("OffHeapMisses", stats.getOffHeapMisses()));
+
+            rs.addRow(new MySQL_Row("OnDiskHits", stats.getOnDiskHits()));
+            rs.addRow(new MySQL_Row("OnDiskMisses", stats.getOnDiskMisses()));
+
+            rs.addRow(new MySQL_Row("EvictionCount", stats.getEvictionCount()));
+
+            rs.addRow(new MySQL_Row("SearchesPerSecond", stats.getSearchesPerSecond()));
+            rs.addRow(new MySQL_Row("WriterQueueSize", stats.getWriterQueueSize()));
             
             context.clear_buffer();
             context.buffer = rs.toPackets();
@@ -227,82 +166,42 @@ public class Plugin_Ehcache extends Plugin_Base {
             this.logger.trace("INFO");
             MySQL_ResultSet_Text rs = new MySQL_ResultSet_Text();
             MySQL_Row row = null;
-            MySQL_Column key = new MySQL_Column("Key");
-            rs.addColumn(key);
-            MySQL_Column val = new MySQL_Column("Value");
-            rs.addColumn(val);
             
-            row = new MySQL_Row();
-            row.addData("getGuid");
-            row.addData(Plugin_Ehcache.cache.getGuid());
-            rs.addRow(row);
+            rs.addColumn(new MySQL_Column("Key"));
+            rs.addColumn(new MySQL_Column("Value"));
             
-            row = new MySQL_Row();
-            row.addData("getName");
-            row.addData(Plugin_Ehcache.cache.getName());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("getStatus");
-            row.addData(Plugin_Ehcache.cache.getStatus().toString());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("isDisabled");
-            row.addData(Plugin_Ehcache.cache.isDisabled());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("isSearchable");
-            row.addData(Plugin_Ehcache.cache.isSearchable());
-            rs.addRow(row);
+            rs.addRow(new MySQL_Row("getGuid", Plugin_Ehcache.cache.getGuid()));
+            rs.addRow(new MySQL_Row("getName", Plugin_Ehcache.cache.getName()));
+            rs.addRow(new MySQL_Row("getStatus", Plugin_Ehcache.cache.getStatus().toString()));
+            rs.addRow(new MySQL_Row("isDisabled", Plugin_Ehcache.cache.isDisabled()));
+            rs.addRow(new MySQL_Row("isSearchable", Plugin_Ehcache.cache.isSearchable()));
             
             try {
-                row = new MySQL_Row();
-                row.addData("isNodeBulkLoadEnabled");
-                row.addData(Plugin_Ehcache.cache.isNodeBulkLoadEnabled());
-                rs.addRow(row);
-                
-                row = new MySQL_Row();
-                row.addData("isClusterBulkLoadEnabled");
-                row.addData(Plugin_Ehcache.cache.isClusterBulkLoadEnabled());
-                rs.addRow(row);
+                rs.addRow(new MySQL_Row("isNodeBulkLoadEnabled", Plugin_Ehcache.cache.isNodeBulkLoadEnabled()));
+                rs.addRow(new MySQL_Row("isClusterBulkLoadEnabled", Plugin_Ehcache.cache.isClusterBulkLoadEnabled()));
             }
             catch (UnsupportedOperationException e) {}
             catch (TerracottaNotRunningException e) {}
             
-            row = new MySQL_Row();
-            row.addData("isStatisticsEnabled");
-            row.addData(Plugin_Ehcache.cache.isStatisticsEnabled());
-            rs.addRow(row);
+            rs.addRow(new MySQL_Row("isStatisticsEnabled", Plugin_Ehcache.cache.isStatisticsEnabled()));
+            rs.addRow(new MySQL_Row("isSampledStatisticsEnabled", Plugin_Ehcache.cache.isSampledStatisticsEnabled()));
             
-            row = new MySQL_Row();
-            row.addData("isSampledStatisticsEnabled");
-            row.addData(Plugin_Ehcache.cache.isSampledStatisticsEnabled());
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("getStatisticsAccuracy");
             switch (Plugin_Ehcache.cache.getStatisticsAccuracy()) {
                 case Statistics.STATISTICS_ACCURACY_BEST_EFFORT:
-                    row.addData("STATISTICS_ACCURACY_BEST_EFFORT");
+                    rs.addRow(new MySQL_Row("getStatisticsAccuracy", "STATISTICS_ACCURACY_BEST_EFFORT"));
                     break;
                 case Statistics.STATISTICS_ACCURACY_GUARANTEED:
-                    row.addData("STATISTICS_ACCURACY_GUARANTEED");
+                    rs.addRow(new MySQL_Row("getStatisticsAccuracy", "STATISTICS_ACCURACY_GUARANTEED"));
                     break;
                 case Statistics.STATISTICS_ACCURACY_NONE:
-                    row.addData("STATISTICS_ACCURACY_NONE");
+                    rs.addRow(new MySQL_Row("getStatisticsAccuracy", "STATISTICS_ACCURACY_NONE"));
                     break;
                 default:
-                    row.addData("STATISTICS_ACCURACY_UNKNOWN");
+                    rs.addRow(new MySQL_Row("getStatisticsAccuracy", "STATISTICS_ACCURACY_UNKNOWN"));
                     break;
             }
-            rs.addRow(row);
             
-            row = new MySQL_Row();
-            row.addData("hasAbortedSizeOf");
-            row.addData(Plugin_Ehcache.cache.hasAbortedSizeOf());
-            rs.addRow(row);
+            rs.addRow(new MySQL_Row("hasAbortedSizeOf", Plugin_Ehcache.cache.hasAbortedSizeOf()));
             
             context.clear_buffer();
             context.buffer = rs.toPackets();
@@ -313,69 +212,12 @@ public class Plugin_Ehcache extends Plugin_Base {
             List keys = this.cache.getKeysWithExpiryCheck();
             
             MySQL_ResultSet_Text rs = new MySQL_ResultSet_Text();
-            MySQL_Column key = new MySQL_Column("Key");
-            rs.addColumn(key);
+            rs.addColumn(new MySQL_Column("Key"));
             
             for (Object k: keys) {
                 this.logger.trace("Key: '"+k+"'");
-                MySQL_Row row = new MySQL_Row();
-                row.addData(k.toString());
-                rs.addRow(row); 
+                rs.addRow(new MySQL_Row(k.toString())); 
             }
-            
-            context.clear_buffer();
-            context.buffer = rs.toPackets();
-            context.nextMode = MySQL_Flags.MODE_SEND_QUERY_RESULT;
-        }
-        else if (command.equalsIgnoreCase("EHCACHE HELP")) {
-            this.logger.trace("EHCACHE HELP");
-            
-            MySQL_ResultSet_Text rs = new MySQL_ResultSet_Text();
-            
-            rs.addColumn(new MySQL_Column("Command"));
-            rs.addColumn(new MySQL_Column("Help"));
-            
-            MySQL_Row row = null;
-            
-            row = new MySQL_Row();
-            row.addData("Usage");
-            row.addData("/* COMMAND */ SELECT query FROM table");
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("CACHE: TTL");
-            row.addData("Cache the query result for TTL seconds");
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("FLUSH");
-            row.addData("Flush the query from the cache");
-            rs.addRow(row); 
-            
-            row = new MySQL_Row();
-            row.addData("REFRESH: TTL");
-            row.addData("Expire the query and refetch it");
-            rs.addRow(row); 
-            
-            row = new MySQL_Row();
-            row.addData("STATS");
-            row.addData("Output Ehcache statistics");
-            rs.addRow(row); 
-            
-            row = new MySQL_Row();
-            row.addData("DUMP KEYS");
-            row.addData("Dump all the keys currently in the cache");
-            rs.addRow(row); 
-            
-            row = new MySQL_Row();
-            row.addData("EHCACHE HELP");
-            row.addData("This help");
-            rs.addRow(row);
-            
-            row = new MySQL_Row();
-            row.addData("FLUSHALL");
-            row.addData("Removes all cached items");
-            rs.addRow(row); 
             
             context.clear_buffer();
             context.buffer = rs.toPackets();

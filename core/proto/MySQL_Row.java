@@ -10,8 +10,39 @@ public class MySQL_Row extends MySQL_Packet {
     
     public ArrayList<Object> data = new ArrayList<Object>();
     
+    public MySQL_Row () {}
+    
+    public MySQL_Row (String data1) {
+        this.addData(data1);
+    }
+    
     public void addData(String data) {
         this.data.add(data);
+    }
+    
+    public MySQL_Row (String data1, Integer data2) {
+        this.addData(data1);
+        this.addData(data2);
+    }
+    
+    public MySQL_Row (String data1, long data2) {
+        this.addData(data1);
+        this.addData(data2);
+    }
+    
+    public MySQL_Row (String data1, float data2) {
+        this.addData(data1);
+        this.addData(data2);
+    }
+    
+    public MySQL_Row (String data1, boolean data2) {
+        this.addData(data1);
+        this.addData(data2);
+    }
+    
+    public MySQL_Row (String data1, String data2) {
+        this.addData(data1);
+        this.addData(data2);
     }
     
     public void addData(Integer data) {
