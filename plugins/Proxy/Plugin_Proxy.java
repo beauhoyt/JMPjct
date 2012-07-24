@@ -6,21 +6,24 @@ public class Plugin_Proxy extends Plugin_Base {
     public Logger logger = Logger.getLogger("Plugin.Proxy");
     
     // MySql server stuff
-    public String mysqlHost = "127.0.0.1";
-    public int mysqlPort = 3306;
+    public String mysqlHost = "";
+    public int mysqlPort = 0;
     public Socket mysqlSocket = null;
     public InputStream mysqlIn = null;
     public OutputStream mysqlOut = null;
     
-    public Plugin_Proxy() {
-        this.logger.trace("Plugin_Proxy");
-        // TODO Parse system props to figure out which server we're proxying to
-        this.mysqlHost = "127.0.0.1";
-        this.mysqlPort = 3306;
-    }
-    
     public void init(Engine context) throws IOException, UnknownHostException {
         this.logger.trace("init");
+        
+        String[] phs = System.getProperty("proxyHosts").split(",");
+        for (String ph: phs) {
+            String[] hi = ph.split(":");
+            if (context.port == Integer.parseInt(hi[0])) {
+                this.mysqlHost = hi[1];
+                this.mysqlPort = Integer.parseInt(hi[2]);
+                break;
+            }
+        }
         
         // Connect to the mysql server on the other side
         this.mysqlSocket = new Socket(this.mysqlHost, this.mysqlPort);

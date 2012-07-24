@@ -177,7 +177,7 @@ public class Engine extends Thread {
     }
     
     public void halt() {
-        this.logger.info("Halting!");
+        this.logger.trace("Halting!");
         this.running = false;
     }
     

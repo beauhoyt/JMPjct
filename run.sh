@@ -22,7 +22,7 @@ PROXYOPT="${PROXYOPT} -DlogConf=conf/log.conf"
 PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Proxy,Plugin_Ehcache"
 
 # Proxy
-PROXYOPT="${PROXYOPT} -DproxyHosts=5050:127.0.0.1:3306,5051:127.0.0.1:3306"
+PROXYOPT="${PROXYOPT} -DproxyHosts=5050:127.0.0.1:3306,5051:127.0.0.1:3307"
 
 # Ehcache
 PROXYOPT="${PROXYOPT} -DehcacheConf=conf/ehcache.xml"
