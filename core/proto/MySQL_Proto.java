@@ -222,6 +222,10 @@ public class MySQL_Proto {
         String str = "";
         
         for (int i = offset; i < packet.length; i++) {
+            if (packet[i] == 0x00 && i == packet.length-1) {
+                MySQL_Proto.offsetOffset += 1;
+                break;
+            }
             str += MySQL_Proto.int2char(packet[i]);
             MySQL_Proto.offsetOffset += 1;
         }
