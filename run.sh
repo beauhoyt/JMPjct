@@ -4,34 +4,14 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-JAVAOPT="-Xmx4096m"
-JAVAOPT="${JAVAOPT} -Xshare:off"
+JAVAOPT=""
+JAVAOPT="${JAVAOPT} -Xmx2g"
+#JAVAOPT="${JAVAOPT} -Xshare:off"
 
 JAVACOPT="-Xlint:unchecked"
 
-PROXYOPT=""
+PROXYOPT="-Dconfig=conf/jmp.properties"
 CLASSPATH=""
-
-# Connection options
-PROXYOPT="${PROXYOPT} -Dports=5050"
-
-# Logging Config File
-PROXYOPT="${PROXYOPT} -DlogConf=conf/log.conf"
-
-# Plugins
-#PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Proxy,Plugin_Debug,Plugin_Example"
-#PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Proxy,Plugin_Debug"
-PROXYOPT="${PROXYOPT} -Dplugins=com.github.jmpjct.plugin.proxy.Proxy,com.github.jmpjct.plugin.cache.eh.Eh"
-
-# Proxy
-PROXYOPT="${PROXYOPT} -DproxyHosts=5050:127.0.0.1:3306,5051:127.0.0.1:2000,5052:127.0.0.1:5050"
-
-# Ehcache
-PROXYOPT="${PROXYOPT} -DehcacheConf=conf/ehcache.xml"
-PROXYOPT="${PROXYOPT} -DehcacheCacheName=MySQL"
-
-# Ehcache for OS X. Disable on linux
-# PROXYOPT="${PROXYOPT} -Dnet.sf.ehcache.pool.sizeof.AgentSizeOf.bypass=true"
 
 # Core components
 CLASSPATH="${CLASSPATH}:src"

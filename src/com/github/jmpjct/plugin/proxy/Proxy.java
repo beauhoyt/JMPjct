@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import org.apache.log4j.Logger;
+import com.github.jmpjct.JMP;
 import com.github.jmpjct.plugin.Base;
 import com.github.jmpjct.Engine;
 import com.github.jmpjct.mysql.proto.MySQL_Packet;
@@ -29,12 +30,12 @@ public class Proxy extends Base {
     public void init(Engine context) throws IOException, UnknownHostException {
         this.logger.trace("init");
         
-        String[] phs = System.getProperty("proxyHosts").split(",");
+        String[] phs = JMP.config.getProperty("proxyHosts").split(",");
         for (String ph: phs) {
             String[] hi = ph.split(":");
-            if (context.port == Integer.parseInt(hi[0])) {
-                this.mysqlHost = hi[1];
-                this.mysqlPort = Integer.parseInt(hi[2]);
+            if (context.port == Integer.parseInt(hi[0].trim())) {
+                this.mysqlHost = hi[1].trim();
+                this.mysqlPort = Integer.parseInt(hi[2].trim());
                 break;
             }
         }

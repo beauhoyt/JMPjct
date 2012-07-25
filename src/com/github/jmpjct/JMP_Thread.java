@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.net.ServerSocket;
 import org.apache.log4j.Logger;
 import com.github.jmpjct.plugin.Base;
+import com.github.jmpjct.JMP;
 import com.github.jmpjct.plugin.*;
 
 public class JMP_Thread extends Thread {
@@ -37,14 +38,14 @@ public class JMP_Thread extends Thread {
         
         String[] ps = new String[0];
         
-        if (System.getProperty("plugins") != null)
-            ps = System.getProperty("plugins").split(",");
+        if (JMP.config.getProperty("plugins") != null)
+            ps = JMP.config.getProperty("plugins").split(",");
         
         while (this.listening) {
             plugins = new ArrayList<Base>();
             for (String p: ps) {
                 try {
-                    plugins.add((Base) Base.class.getClassLoader().loadClass(p).newInstance());
+                    plugins.add((Base) Base.class.getClassLoader().loadClass(p.trim()).newInstance());
                     this.logger.info("Loaded plugin "+p);
                 }
                 catch (java.lang.ClassNotFoundException e) {

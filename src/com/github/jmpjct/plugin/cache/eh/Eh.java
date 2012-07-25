@@ -8,6 +8,7 @@ import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.Statistics;
 import net.sf.ehcache.terracotta.TerracottaNotRunningException;
+import com.github.jmpjct.JMP;
 import com.github.jmpjct.plugin.Base;
 import com.github.jmpjct.Engine;
 import com.github.jmpjct.mysql.proto.MySQL_Flags;
@@ -27,18 +28,18 @@ public class Eh extends Base {
     
     public Eh() {
         if (Eh.cachemanager == null) {
-            this.logger.trace("Eh - CacheManager: Loading "+System.getProperty("ehcacheConf"));
-            Eh.cachemanager = CacheManager.create(System.getProperty("ehcacheConf"));
+            this.logger.trace("Eh - CacheManager: Loading "+JMP.config.getProperty("ehcacheConf"));
+            Eh.cachemanager = CacheManager.create(JMP.config.getProperty("ehcacheConf").trim());
         }
         
         if (Eh.cache == null) {
-            this.logger.trace("Eh - cache: Getting "+System.getProperty("ehcacheCacheName"));
-            Eh.cache = Eh.cachemanager.getEhcache(System.getProperty("ehcacheCacheName"));
+            this.logger.trace("Eh - cache: Getting "+JMP.config.getProperty("ehcacheCacheName"));
+            Eh.cache = Eh.cachemanager.getEhcache(JMP.config.getProperty("ehcacheCacheName").trim());
             Eh.cache.setSampledStatisticsEnabled(true);
         }
         
         if (Eh.cache == null) {
-            this.logger.fatal("Eh is null! Does instance '"+System.getProperty("ehcacheCacheName")+"' exist?");
+            this.logger.fatal("Eh is null! Does instance '"+JMP.config.getProperty("ehcacheCacheName")+"' exist?");
         }
     }
     
