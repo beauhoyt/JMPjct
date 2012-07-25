@@ -13,7 +13,7 @@ PROXYOPT=""
 CLASSPATH=""
 
 # Connection options
-PROXYOPT="${PROXYOPT} -Dports=5050,5051"
+PROXYOPT="${PROXYOPT} -Dports=5050"
 
 # Logging Config File
 PROXYOPT="${PROXYOPT} -DlogConf=conf/log.conf"
@@ -21,10 +21,10 @@ PROXYOPT="${PROXYOPT} -DlogConf=conf/log.conf"
 # Plugins
 #PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Proxy,Plugin_Debug,Plugin_Example"
 #PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Proxy,Plugin_Debug"
-PROXYOPT="${PROXYOPT} -Dplugins=Plugin_Proxy,Plugin_Ehcache"
+PROXYOPT="${PROXYOPT} -Dplugins=com.github.jmpjct.plugin.proxy.Proxy,com.github.jmpjct.plugin.cache.eh.Eh"
 
 # Proxy
-PROXYOPT="${PROXYOPT} -DproxyHosts=5050:127.0.0.1:3306,5051:127.0.0.1:2000"
+PROXYOPT="${PROXYOPT} -DproxyHosts=5050:127.0.0.1:3306,5051:127.0.0.1:2000,5052:127.0.0.1:5050"
 
 # Ehcache
 PROXYOPT="${PROXYOPT} -DehcacheConf=conf/ehcache.xml"
@@ -34,14 +34,7 @@ PROXYOPT="${PROXYOPT} -DehcacheCacheName=MySQL"
 # PROXYOPT="${PROXYOPT} -Dnet.sf.ehcache.pool.sizeof.AgentSizeOf.bypass=true"
 
 # Core components
-CLASSPATH="${CLASSPATH}:core"
-CLASSPATH="${CLASSPATH}:core/proto"
-
-# Locate the plugins
-for path in `find plugins -type d`
-do
-    CLASSPATH="${CLASSPATH}:${path}"
-done
+CLASSPATH="${CLASSPATH}:src"
 
 # Locate the conf files (Required for ehcache)
 CLASSPATH="${CLASSPATH}:conf"
@@ -59,7 +52,7 @@ set CLASSPATH="${CLASSPATH}"
 export CLASSPATH="${CLASSPATH}"
 
 # Compile
-javac ${JAVACOPT} -classpath "${CLASSPATH}" `find . -name \*.java | tr \\\n " "`
+javac ${JAVACOPT} -classpath "${CLASSPATH}" `find src -name \*.java | tr \\\n " "`
 
 # Run
-java ${JAVAOPT} -classpath "${CLASSPATH}" ${PROXYOPT} JMP
+java ${JAVAOPT} -classpath "${CLASSPATH}" ${PROXYOPT} com.github.jmpjct.JMP
