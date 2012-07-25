@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="JMP" basedir="." default="build">
+    
+    <tstamp prefix="now" />
+    <property name="version" value="0.1.0" />
+    <property name="build.dir" value="build" />
+    <property name="javac.source" value="1.6" />
+	<property name="javac.debug" value="true" />
+	<property name="javac.encoding" value="8859_1"/>
+
+    <property name="lib.dir" value="lib" />
+    <property name="src.dir" value="src" />
+    
+    <condition property="config" value="conf/jmp.properties">
+		<not>
+			<isset property="config" />
+		</not>
+	</condition>
+    
+    <path id="classpath">
+        <fileset dir="${lib.dir}">
+            <include name="commons-io-2.4.jar" />
+            <include name="Ehcache/ehcache-core-2.5.2.jar" />
+            <include name="Ehcache/ehcache-terracotta-2.5.2.jar" />
+            <include name="Ehcache/slf4j-api-1.6.1.jar" />
+            <include name="Ehcache/slf4j-jdk14-1.6.1.jar" />
+            <include name="Ehcache/terracotta-toolkit-1.5-runtime-4.2.0.jar" />
+            <include name="log4j-1.2.17.jar" />
+        </fileset>
+	</path>
+    
+    <target name="init" description="Create the build dir" depends="clean">
+		<mkdir dir="${build.dir}" />
+	</target>
+    
+    <target name="build" description="Build" depends="">
+		<antcall target="init" />
+
+		<javac destdir="${build.dir}"
+			includeantruntime="false"
+			classpathref="classpath"
+			debug="${javac.debug}"
+			encoding="${javac.encoding}"
+			source="${javac.source}">
+			<src path="${src.dir}" />
+		</javac>
+
+		<jar destfile="JMP-${version}.jar"
+             basedir="${build.dir}"
+             includes="*.class"
+             manifest="JarManifest"
+             compress="true"
+             update="true"
+        />
+
+		<antcall target="clean" />
+	</target>
+    
+    <target name="clean" description="Remove all work files." depends="">
+		<delete dir="${build.dir}" />
+	</target>
+    
+    <target name="run" description="Run JMP">
+        <java jar="JMP-${version}.jar"
+              classpathref="classpath"
+              fork="true"
+              failonerror="true">
+            <jvmarg value="-Xmx2g" />
+            <jvmarg value="-Xshare:off" />
+            
+            <sysproperty key="config" value="${config}" />
+        </java>
+	</target>
+    
+</project>
+    
